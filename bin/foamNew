@@ -28,25 +28,31 @@
 #     foamNew
 #
 # Description
-#     Create a new standard OpenFOAM source or template file
+#     Create a standard OpenFOAM source or template file
 #
 #------------------------------------------------------------------------------
 usage() {
     exec 1>&2
     while [ "$#" -ge 1 ]; do echo "$1"; shift; done
     cat<<USAGE
-Usage: ${0##*/} <type> {args}
+Usage: ${0##*/} [OPTION] <type> {args}
 
-* create a new standard OpenFOAM source or template file
+Create a standard OpenFOAM source or template file
+
+options:
+  -help             print the usage
 
 type:
     -s | -source | source
     -t | -template | template
 
+args:
+    for 'source': <type> <ClassName>
+    for 'template': <type> <ClassName> <Template arguments...>
+
 USAGE
     exit 1
 }
-
 
 # this implicitly covers a lone -help, but let other scripts handle the rest
 [ "$#" -gt 1 ] || usage
