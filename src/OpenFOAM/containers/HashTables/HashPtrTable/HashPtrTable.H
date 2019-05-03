@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2004-2010, 2017-2018 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2004-2010, 2017-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2016 OpenFOAM Foundation
@@ -27,9 +27,16 @@ Class
     Foam::HashPtrTable
 
 Description
-    A HashTable of pointers to objects of type \<T\>.
+    A HashTable of pointers to objects of type \<T\>,
+    using an autoPtr for memory management.
+
+Note
+    Uses autoPtr instead of std::unique_ptr for the memory management,
+    primarily for its cast to pointer methods that allow for backwards
+    compatible callers.
 
 SourceFiles
+    HashPtrTableI.H
     HashPtrTable.C
     HashPtrTableIO.C
 
@@ -38,6 +45,7 @@ SourceFiles
 #ifndef HashPtrTable_H
 #define HashPtrTable_H
 
+#include "autoPtr.H"
 #include "HashTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -45,12 +53,10 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declarations
-
+// Forward Declarations
 class Istream;
 class Ostream;
 
-template<class T> class autoPtr;
 template<class T, class Key, class Hash> class HashPtrTable;
 
 template<class T, class Key, class Hash>
@@ -64,7 +70,7 @@ Istream& operator>>(Istream& is, HashPtrTable<T, Key, Hash>& tbl);
 template<class T, class Key=word, class Hash=string::hash>
 class HashPtrTable
 :
-    public HashTable<T*, Key, Hash>
+    public HashTable<autoPtr<T>, Key, Hash>
 {
     // Private Member Functions
 
@@ -83,7 +89,7 @@ public:
     typedef HashPtrTable<T, Key, Hash> this_type;
 
     //- The template instance used for the parent HashTable
-    typedef HashTable<T*, Key, Hash> parent_type;
+    typedef HashTable<autoPtr<T>, Key, Hash> parent_type;
 
     using iterator = typename parent_type::iterator;
     using const_iterator = typename parent_type::const_iterator;
@@ -114,40 +120,16 @@ public:
         HashPtrTable(this_type&& ht);
 
 
-    //- Destructor
-    ~HashPtrTable();
-
-
     // Member Functions
 
     // Edit
 
-        //- Remove entry specified by given iterator.
-        //  Includes a safeguard against the end-iterator.
-        //
-        //  \return entry as an encapsulated pointer.
+        //- Remove entry specified by given iterator and return as autoPtr
+        //  Includes an end-iterator safeguard.
         autoPtr<T> remove(iterator& iter);
 
-        //- Remove entry specified by given key.
-        //
-        //  \return entry as an encapsulated pointer.
+        //- Remove entry specified by given key and return as autoPtr
         autoPtr<T> remove(const Key& key);
-
-        //- Erase entry specified by given iterator and delete the
-        //- allocated pointer.
-        //  Includes a safeguard against the end-iterator.
-        //
-        //  \return True if item was removed
-        bool erase(iterator& iter);
-
-        //- Erase entry specified by given key and delete the
-        //- allocated pointer.
-        //
-        //  \return True if item was removed
-        bool erase(const Key& key);
-
-        //- Clear all entries from table and delete any allocated pointers
-        void clear();
 
         //- Write
         void write(Ostream& os) const;
@@ -173,28 +155,27 @@ public:
 
     // Housekeeping
 
-        //- No insert() with raw pointers (potential memory leaks).
-        //- Use insert() with autoPtr or set()
-        inline bool insert(const Key&, T*) = delete;
+        //- Insert a new entry, not overwriting existing entries.
+        //  Memory is freed if the insert fails.
+        //  \return True if the entry inserted (not previously in table)
+        inline bool insert(const Key& key, T* ptr);
 
         //- Insert a new entry, not overwriting existing entries.
-        //
         //  \return True if the entry inserted (not previously in table)
-        inline bool insert(const Key& key, autoPtr<T>& aptr);
+        inline bool insert(const Key& key, autoPtr<T>& ptr);
 
         //- Insert a new entry, not overwriting existing entries.
-        //
         //  \return True if the entry inserted (not previously in table)
-        inline bool insert(const Key& key, autoPtr<T>&& aptr);
+        inline bool insert(const Key& key, autoPtr<T>&& ptr);
 
         //- Assign a new entry, overwriting existing entries.
         inline bool set(const Key& key, T* ptr);
 
         //- Assign a new entry, overwriting existing entries.
-        inline bool set(const Key& key, autoPtr<T>& aptr);
+        inline bool set(const Key& key, autoPtr<T>& ptr);
 
         //- Assign a new entry, overwriting existing entries.
-        inline bool set(const Key& key, autoPtr<T>&& aptr);
+        inline bool set(const Key& key, autoPtr<T>&& ptr);
 };
 
 

@@ -41,11 +41,11 @@ void printTable(const HashPtrTable<T>& table)
 
     forAllConstIters(table, iter)
     {
-        const T* ptr = iter.val();
+        const auto& ptr = iter.val();
         Info<< iter.key() << " = ";
         if (ptr)
         {
-            Info<< *ptr << " (" << uintptr_t(ptr) << ")";
+            Info<< *ptr << " (" << uintptr_t(ptr.get()) << ")";
         }
         else
         {
@@ -56,14 +56,14 @@ void printTable(const HashPtrTable<T>& table)
 
     Info<< ")" << endl;
 
-    // Values only, with for-range
+    // Iterate across values, with for-range
     Info<< "values (";
-    for (const auto& val : table)
+    for (const auto& ptr : table)
     {
         Info<< ' ';
-        if (val)
+        if (ptr)
         {
-            Info<< *val;
+            Info<< *ptr;
         }
         else
         {

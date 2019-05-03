@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2018 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2018-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -47,16 +47,10 @@ template<class T, class Key, class Hash>
 inline bool Foam::HashPtrTable<T, Key, Hash>::insert
 (
     const Key& key,
-    autoPtr<T>& aptr
+    T* ptr
 )
 {
-    if (parent_type::insert(key, aptr.get()))
-    {
-        aptr.release(); // Now owned by HashPtrTable
-        return true;
-    }
-
-    return false;
+    return parent_type::insert(key, autoPtr<T>(ptr));
 }
 
 
@@ -64,16 +58,21 @@ template<class T, class Key, class Hash>
 inline bool Foam::HashPtrTable<T, Key, Hash>::insert
 (
     const Key& key,
-    autoPtr<T>&& aptr
+    autoPtr<T>& ptr
 )
 {
-    if (parent_type::insert(key, aptr.get()))
-    {
-        aptr.release(); // Now owned by HashPtrTable
-        return true;
-    }
+    return parent_type::insert(key, std::move(ptr));
+}
 
-    return false;
+
+template<class T, class Key, class Hash>
+inline bool Foam::HashPtrTable<T, Key, Hash>::insert
+(
+    const Key& key,
+    autoPtr<T>&& ptr
+)
+{
+    return parent_type::insert(key, std::move(ptr));
 }
 
 
@@ -84,7 +83,7 @@ inline bool Foam::HashPtrTable<T, Key, Hash>::set
     T* ptr
 )
 {
-    return this->parent_type::set(key, ptr);
+    return parent_type::set(key, autoPtr<T>(ptr));
 }
 
 
@@ -92,10 +91,10 @@ template<class T, class Key, class Hash>
 inline bool Foam::HashPtrTable<T, Key, Hash>::set
 (
     const Key& key,
-    autoPtr<T>& aptr
+    autoPtr<T>& ptr
 )
 {
-    return this->set(key, aptr.release());
+    return parent_type::set(key, std::move(ptr));
 }
 
 
@@ -103,10 +102,10 @@ template<class T, class Key, class Hash>
 inline bool Foam::HashPtrTable<T, Key, Hash>::set
 (
     const Key& key,
-    autoPtr<T>&& aptr
+    autoPtr<T>&& ptr
 )
 {
-    return this->set(key, aptr.release());
+    return parent_type::set(key, std::move(ptr));
 }
 
 

@@ -155,10 +155,11 @@ void Foam::HashPtrTable<T, Key, Hash>::write(Ostream& os) const
 {
     for (const_iterator iter = this->cbegin(); iter != this->cend(); ++iter)
     {
-        const T* ptr = iter.val();
-        if (ptr)
+        const auto& uptr = iter.val();
+
+        if (uptr)
         {
-            ptr->write(os);
+            uptr->write(os);
         }
     }
 }
@@ -191,7 +192,11 @@ Foam::HashPtrTable<T, Key, Hash>::HashPtrTable(const dictionary& dict)
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::Istream& Foam::operator>>(Istream& is, HashPtrTable<T, Key, Hash>& tbl)
+Foam::Istream& Foam::operator>>
+(
+    Istream& is,
+    HashPtrTable<T, Key, Hash>& tbl
+)
 {
     tbl.clear();
     tbl.readIstream(is, INew<T>());
