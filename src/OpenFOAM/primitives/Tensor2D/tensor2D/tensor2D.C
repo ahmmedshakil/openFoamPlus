@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2004-2010 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2004-2010, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2017 OpenFOAM Foundation
@@ -86,96 +86,116 @@ const Foam::tensor2D Foam::tensor2D::I
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Foam::vector2D Foam::eigenValues(const tensor2D& t)
-{
-    // Coefficients of the characteristic quadratic polynomial (a = 1)
-    const scalar b = - t.xx() - t.yy();
-    const scalar c = t.xx()*t.yy() - t.xy()*t.yx();
-
-    // Solve
-    Roots<2> roots = quadraticEqn(1, b, c).roots();
-
-    // Check the root types
-    vector2D lambda = vector2D::zero;
-    forAll(roots, i)
-    {
-        switch (roots.type(i))
-        {
-            case roots::real:
-                lambda[i] = roots[i];
-                break;
-            case roots::complex:
-                WarningInFunction
-                    << "Complex eigenvalues detected for tensor: " << t
-                    << endl;
-                lambda[i] = 0;
-                break;
-            case roots::posInf:
-                lambda[i] = VGREAT;
-                break;
-            case roots::negInf:
-                lambda[i] = - VGREAT;
-                break;
-            case roots::nan:
-                FatalErrorInFunction
-                    << "Eigenvalue calculation failed for tensor: " << t
-                    << exit(FatalError);
-        }
-    }
-
-    // Sort the eigenvalues into ascending order
-    if (lambda.x() > lambda.y())
-    {
-        Swap(lambda.x(), lambda.y());
-    }
-
-    return lambda;
-}
-
-
-Foam::vector2D Foam::eigenVector
+Foam::Vector2D<Foam::complex> Foam::eigenValues
 (
-    const tensor2D& T,
-    const scalar lambda,
-    const vector2D& direction1
+    const tensor2D& T
 )
 {
-    // Construct the linear system for this eigenvalue
-    tensor2D A(T - lambda*tensor2D::I);
+    const scalar a = T.xx();
+    const scalar b = T.xy();
+    const scalar c = T.yx();
+    const scalar d = T.yy();
 
-    // Evaluate the eigenvector using the largest divisor
-    if (mag(A.yy()) > mag(A.xx()) && mag(A.yy()) > SMALL)
+    const scalar trace = a + d;
+
+    // (Jeannerod et al. (2013), p. 2246)
+    scalar w = b*c;
+    scalar e = std::fma(-b, c, w);
+    scalar f = std::fma(a, d, -w);
+    const scalar determinant = f + e;
+
+    // Square-distance between two eigenvalues
+    const scalar gapSqr = std::fma(-4.0, determinant, sqr(trace));
+
+    // (Ford, (2014), Section 8.4.2.)
+    // Eigenvalues are effectively real
+    if (0 <= gapSqr)
     {
-        vector2D ev(1, - A.yx()/A.yy());
+        scalar firstRoot = 0.5*(trace - sign(-trace)*Foam::sqrt(gapSqr));
 
-        return ev/mag(ev);
+        #ifdef FULLDEBUG
+            if (mag(firstRoot) < SMALL)
+            FatalErrorInFunction
+                << "Almost-zero-valued root is detected."
+                << abort(FatalError);
+        #endif
+
+        Vector2D<complex> lambdas
+        (
+            complex(firstRoot, 0),
+            complex(determinant/firstRoot, 0)
+        );
+
+        // Sort the eigenvalues into ascending order
+        if (mag(lambdas.y()) < mag(lambdas.x()))
+        {
+            Swap(lambdas.x(), lambdas.y());
+        }
+
+        return lambdas;
     }
-    else if (mag(A.xx()) > SMALL)
+    // Eigenvalues are complex
+    else
     {
-        vector2D ev(- A.xy()/A.xx(), 1);
+        complex lambda(0.5*trace, 0.5*Foam::sqrt(mag(gapSqr)));
 
-        return ev/mag(ev);
+        return Vector2D<complex>
+        (
+            lambda,
+            lambda.conjugate()
+        );
     }
-
-    // Repeated eigenvalue
-    return vector2D(- direction1.y(), direction1.x());
 }
 
 
-Foam::tensor2D Foam::eigenVectors(const tensor2D& T, const vector2D& lambdas)
+Foam::Vector2D<Foam::complex> Foam::eigenVector
+(
+    const tensor2D& T,
+    const complex& lambda,
+    const Vector2D<complex>& direction
+)
 {
-    vector2D Ux(1, 0), Uy(0, 1);
-
-    Ux = eigenVector(T, lambdas.x(), Uy);
-    Uy = eigenVector(T, lambdas.y(), Ux);
-
-    return tensor2D(Ux, Uy);
+    // (Knill, (2004))
+    if (VSMALL < mag(T.yx()))
+    {
+        Vector2D<complex> eVec(lambda - complex(T.yy()), complex(T.yx()));
+        return eVec/mag(eVec);
+    }
+    else if (VSMALL < mag(T.xy()))
+    {
+        Vector2D<complex> eVec(complex(T.xy()), lambda - complex(T.xx()));
+        return eVec/mag(eVec);
+    }
+    else
+    {
+        return direction;
+    }
 }
 
 
-Foam::tensor2D Foam::eigenVectors(const tensor2D& T)
+Foam::Tensor2D<Foam::complex> Foam::eigenVectors
+(
+    const tensor2D& T,
+    const Vector2D<complex>& lambdas
+)
 {
-    const vector2D lambdas(eigenValues(T));
+    Vector2D<complex> Ux(pTraits<complex>::one, Zero);
+    Vector2D<complex> Uy(Zero, pTraits<complex>::one);
+
+    return Tensor2D<complex>
+    (
+        eigenVector(T, lambdas.x(), Ux),
+        eigenVector(T, lambdas.y(), Uy)
+    );
+}
+
+
+Foam::Tensor2D<Foam::complex> Foam::eigenVectors
+(
+    const tensor2D& T
+)
+{
+    const Vector2D<complex> lambdas(eigenValues(T));
 
     return eigenVectors(T, lambdas);
 }
