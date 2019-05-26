@@ -32,8 +32,7 @@ Description
 #include "dummyLib.H"
 #include <iostream>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

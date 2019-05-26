@@ -35,8 +35,6 @@ Description
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
-
 
 template<class T>
 void printInfo(const SortableList<T>& list)
@@ -45,6 +43,8 @@ void printInfo(const SortableList<T>& list)
         << "indices:  " << list.indices() << endl;
 }
 
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

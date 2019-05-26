@@ -77,8 +77,7 @@ inline Ostream& report
 
 // BitOps::printBits((Info<< list1.info()), true) << nl;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-//  Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

@@ -88,8 +88,7 @@ bool checkDictionaryContent(const dictionary& dict1, const dictionary& dict2)
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-//  Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

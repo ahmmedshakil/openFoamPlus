@@ -77,7 +77,7 @@ void runSwapTest
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

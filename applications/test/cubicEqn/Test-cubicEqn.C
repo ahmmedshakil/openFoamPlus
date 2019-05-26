@@ -31,6 +31,7 @@ scalar randomScalar(const scalar min, const scalar max)
     return x;
 };
 
+
 template <class Type>
 void test(const Type& polynomialEqn, const scalar tol)
 {
@@ -76,6 +77,9 @@ void test(const Type& polynomialEqn, const scalar tol)
             << "Errors: " << e << endl << endl;
     }
 }
+
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main()
 {

@@ -89,8 +89,7 @@ point meshCentre(const polyMesh& mesh)
 }
 
 
-// Main program:
-
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

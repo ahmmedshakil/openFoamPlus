@@ -29,6 +29,8 @@ void test(const vector& a, const vector& b, const scalar tolerance)
 }
 
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main()
 {
     vector a(1.0, 1.0, 1.0);
@@ -69,3 +71,6 @@ int main()
 
     return 0;
 }
+
+
+// ************************************************************************* //

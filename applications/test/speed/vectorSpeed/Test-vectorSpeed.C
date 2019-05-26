@@ -5,6 +5,8 @@
 
 using namespace Foam;
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main()
 {
     const label nIter = 100;
@@ -37,3 +39,6 @@ int main()
         Snull<< vf4[1] << endl << endl;
     }
 }
+
+
+// ************************************************************************* //

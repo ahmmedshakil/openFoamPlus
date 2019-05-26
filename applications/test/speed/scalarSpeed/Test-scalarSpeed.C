@@ -6,6 +6,8 @@
 
 using namespace Foam;
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main()
 {
     Info<< "Initialising fields" << endl;

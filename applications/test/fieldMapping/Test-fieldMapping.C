@@ -54,7 +54,7 @@ bool notEqual(const scalar s1, const scalar s2, const scalar tol)
 }
 
 
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

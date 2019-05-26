@@ -5,6 +5,8 @@
 
 using namespace Foam;
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main()
 {
     triangle<point, point> tri
@@ -38,3 +40,6 @@ int main()
 
     return 0;
 }
+
+
+// ************************************************************************* //

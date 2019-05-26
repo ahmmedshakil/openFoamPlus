@@ -75,7 +75,7 @@ int print(char *argv[])
 }
 
 
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

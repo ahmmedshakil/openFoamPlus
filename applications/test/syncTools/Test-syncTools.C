@@ -586,7 +586,7 @@ void testFaceSync(const polyMesh& mesh, Random& rndGen)
 }
 
 
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

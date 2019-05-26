@@ -43,8 +43,8 @@ Ostream& printInfo(const hashedWordList& list, bool withAddr=false)
     return Info;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

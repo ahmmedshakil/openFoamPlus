@@ -38,7 +38,7 @@ Description
 #include "linearInterpolationWeights.H"
 #include "splineInterpolationWeights.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

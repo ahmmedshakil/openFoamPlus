@@ -125,7 +125,7 @@ void testMixed(std::ostream& os, const UList<Pair<string>>& list)
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char * argv[])
 {

@@ -103,7 +103,7 @@ void writeStencilStats(const labelListList& stencil)
 }
 
 
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

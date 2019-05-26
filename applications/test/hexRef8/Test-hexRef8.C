@@ -48,9 +48,8 @@ Description
 
 using namespace Foam;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
-// Main program:
 int main(int argc, char *argv[])
 {
     #include "addTimeOptions.H"

@@ -38,7 +38,6 @@ Description
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
 
 template<class T>
 void printTraits()
@@ -61,6 +60,9 @@ void printTraits(const pTraits<T>& p)
 
 #pragma GCC diagnostic warning "-Wmaybe-uninitialized"
 #pragma GCC diagnostic warning "-Wuninitialized"
+
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main()
 {

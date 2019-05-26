@@ -35,7 +35,7 @@ Description
 #include "slicedFvPatchFields.H"
 #include "slicedSurfaceFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

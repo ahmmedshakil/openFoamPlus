@@ -209,7 +209,7 @@ void writeFaceFaces
 }
 
 
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

@@ -47,6 +47,8 @@ void testExtraction(const std::string& str)
 }
 
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main()
 {
     Info

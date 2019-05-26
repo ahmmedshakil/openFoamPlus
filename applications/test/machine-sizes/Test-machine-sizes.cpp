@@ -42,8 +42,8 @@ void print(const char* msg)
     std::cout<< msg << ' ' << sizeof(T) << '\n';
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

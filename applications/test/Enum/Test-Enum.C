@@ -88,8 +88,7 @@ std::array<const char*, 2> myarray{ "false", "true" };
 // const Foam::NamedEnum<testing::option, 2> bad_legacy;
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

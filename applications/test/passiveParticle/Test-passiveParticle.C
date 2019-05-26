@@ -34,7 +34,7 @@ Description
 #include "fvCFD.H"
 #include "passiveParticleCloud.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

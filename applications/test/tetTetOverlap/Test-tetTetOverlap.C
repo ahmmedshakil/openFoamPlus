@@ -67,6 +67,8 @@ tetPointRef makeTetPointRef(const FixedList<point, 4>& p)
 }
 
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main(int argc, char *argv[])
 {
     // Tets to test

@@ -23,7 +23,6 @@ License
 
 Description
 
-
 \*---------------------------------------------------------------------------*/
 
 #include <iostream>
@@ -71,8 +70,7 @@ void printTable(const PtrMap<T>& table)
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-//  Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main()
 {

@@ -45,6 +45,8 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"

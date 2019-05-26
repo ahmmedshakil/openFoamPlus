@@ -42,8 +42,7 @@ using namespace Foam;
     Info<< typeid(arg).name() << " <= typeid of " << STRING_QUOTE(arg) << nl
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

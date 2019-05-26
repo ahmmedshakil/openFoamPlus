@@ -46,7 +46,7 @@ using namespace Foam;
 using namespace RBD;
 using namespace Foam::constant::mathematical;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

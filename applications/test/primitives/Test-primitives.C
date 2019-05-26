@@ -150,6 +150,8 @@ unsigned testParsing
 }
 
 
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
+
 int main(int argc, char *argv[])
 {
     unsigned nFail = 0;

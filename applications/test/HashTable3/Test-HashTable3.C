@@ -43,8 +43,7 @@ Ostream& printInfo(Ostream& os, const HashTable<T, T, Hash<T>>& ht)
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

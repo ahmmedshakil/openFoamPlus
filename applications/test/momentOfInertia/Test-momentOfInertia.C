@@ -43,9 +43,9 @@ Description
 #include "meshTools.H"
 #include "momentOfInertia.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 using namespace Foam;
+
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {

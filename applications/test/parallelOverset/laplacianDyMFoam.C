@@ -58,7 +58,7 @@ Description
 #include "dynamicFvMesh.H"
 #include "dynamicOversetFvMesh.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Main Program  * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
