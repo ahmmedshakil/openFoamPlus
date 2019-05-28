@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2007-2011 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2007-2011, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2016 OpenFOAM Foundation
@@ -64,7 +64,7 @@ public:
         scalar density,
         scalar& mass,
         vector& cM,
-        tensor& J
+        symmTensor& J
     );
 
     static void massPropertiesShell
@@ -74,7 +74,7 @@ public:
         scalar density,
         scalar& mass,
         vector& cM,
-        tensor& J,
+        symmTensor& J,
         bool doReduce = false
     );
 
@@ -84,7 +84,7 @@ public:
         scalar density,
         scalar& mass,
         vector& cM,
-        tensor& J
+        symmTensor& J
     );
 
     static void massPropertiesShell
@@ -93,7 +93,7 @@ public:
         scalar density,
         scalar& mass,
         vector& cM,
-        tensor& J,
+        symmTensor& J,
         bool doReduce = false
     );
 
@@ -103,7 +103,7 @@ public:
         scalar density,
         scalar& mass,
         vector& cM,
-        tensor& J,
+        symmTensor& J,
         bool doReduce = false
     );
 
@@ -111,18 +111,18 @@ public:
     (
         scalar mass,
         const vector& cM,
-        const tensor& J,
+        const symmTensor& J,
         const vector& refPt
     );
 
     // Calculate the inertia tensor for all cells in the mesh
-    static tmp<tensorField> meshInertia
+    static tmp<symmTensorField> meshInertia
     (
         const polyMesh& mesh
     );
 
     // Calculate the inertia tensor the given cell
-    static tensor meshInertia
+    static symmTensor meshInertia
     (
         const polyMesh& mesh,
         label celli

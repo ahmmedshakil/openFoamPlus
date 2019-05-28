@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2007-2011, 2015 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2007-2011, 2015, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2016 OpenFOAM Foundation
@@ -37,7 +37,7 @@ void Foam::momentOfInertia::massPropertiesSolid
     scalar density,
     scalar& mass,
     vector& cM,
-    tensor& J
+    symmTensor& J
 )
 {
     // Reimplemented from: Wm4PolyhedralMassProperties.cpp
@@ -171,11 +171,8 @@ void Foam::momentOfInertia::massPropertiesSolid
     J.xx() = integrals[5] + integrals[6];
     J.xy() = -integrals[7];
     J.xz() = -integrals[9];
-    J.yx() = J.xy();
     J.yy() = integrals[4] + integrals[6];
     J.yz() = -integrals[8];
-    J.zx() = J.xz();
-    J.zy() = J.yz();
     J.zz() = integrals[4] + integrals[5];
 
     // inertia relative to center of mass
@@ -194,7 +191,7 @@ void Foam::momentOfInertia::massPropertiesShell
     scalar density,
     scalar& mass,
     vector& cM,
-    tensor& J,
+    symmTensor& J,
     bool doReduce
 )
 {
@@ -250,7 +247,7 @@ void Foam::momentOfInertia::massPropertiesShell
 
     if (doReduce)
     {
-        reduce(J, sumOp<tensor>());
+        reduce(J, sumOp<symmTensor>());
     }
 }
 
@@ -261,7 +258,7 @@ void Foam::momentOfInertia::massPropertiesSolid
     scalar density,
     scalar& mass,
     vector& cM,
-    tensor& J
+    symmTensor& J
 )
 {
     triFaceList faces(surf.size());
@@ -281,7 +278,7 @@ void Foam::momentOfInertia::massPropertiesShell
     scalar density,
     scalar& mass,
     vector& cM,
-    tensor& J,
+    symmTensor& J,
     bool doReduce
 )
 {
@@ -302,7 +299,7 @@ void Foam::momentOfInertia::massPropertiesPatch
     scalar density,
     scalar& mass,
     vector& cM,
-    tensor& J,
+    symmTensor& J,
     bool doReduce
 )
 {
@@ -334,7 +331,7 @@ Foam::tensor Foam::momentOfInertia::applyParallelAxisTheorem
 (
     scalar mass,
     const vector& cM,
-    const tensor& J,
+    const symmTensor& J,
     const vector& refPt
 )
 {
@@ -348,14 +345,15 @@ Foam::tensor Foam::momentOfInertia::applyParallelAxisTheorem
 }
 
 
-Foam::tmp<Foam::tensorField> Foam::momentOfInertia::meshInertia
+Foam::tmp<Foam::symmTensorField> Foam::momentOfInertia::meshInertia
 (
     const polyMesh& mesh
 )
 {
-    tmp<tensorField> tTf = tmp<tensorField>(new tensorField(mesh.nCells()));
+    tmp<symmTensorField> tTf =
+        tmp<symmTensorField>(new symmTensorField(mesh.nCells()));
 
-    tensorField& tf = tTf.ref();
+    symmTensorField& tf = tTf.ref();
 
     forAll(tf, cI)
     {
@@ -366,7 +364,7 @@ Foam::tmp<Foam::tensorField> Foam::momentOfInertia::meshInertia
 }
 
 
-Foam::tensor Foam::momentOfInertia::meshInertia
+Foam::symmTensor Foam::momentOfInertia::meshInertia
 (
     const polyMesh& mesh,
     label celli
@@ -387,7 +385,7 @@ Foam::tensor Foam::momentOfInertia::meshInertia
 
     scalar m = 0.0;
     vector cM = Zero;
-    tensor J = Zero;
+    symmTensor J = Zero;
 
     massPropertiesSolid(mesh.points(), faces, 1.0, m, cM, J);
 

@@ -2,7 +2,7 @@
  =========                   |
  \\      /   F ield          | OpenFOAM: The Open Source CFD Toolbox
   \\    /    O peration      |
-   \\  /     A nd            | Copyright (C) 2009-2011 OpenCFD Ltd.
+   \\  /     A nd            | Copyright (C) 2009-2011, 2019 OpenCFD Ltd.
     \\/      M anipulation   |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2017 OpenFOAM Foundation
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 
         scalar m = 0.0;
         vector cM = Zero;
-        tensor J = Zero;
+        symmTensor J = Zero;
 
         momentOfInertia::massPropertiesSolid(pts, tetFaces, density, m, cM, J);
 
@@ -200,9 +200,9 @@ int main(int argc, char *argv[])
     {
         const label celli = args.opt<label>("cell", 0);
 
-        tensorField mI(momentOfInertia::meshInertia(mesh));
+        symmTensorField mI(momentOfInertia::meshInertia(mesh));
 
-        tensor& J = mI[celli];
+        symmTensor& J = mI[celli];
 
         vector eVal = eigenValues(J);
 
