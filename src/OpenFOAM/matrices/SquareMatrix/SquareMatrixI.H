@@ -219,6 +219,24 @@ inline void Foam::SquareMatrix<Type>::shallowResize(const label m)
 }
 
 
+template<class Type>
+inline bool Foam::SquareMatrix<Type>::symmetric() const
+{
+    for (label n = 0; n < this->n() - 1; ++n)
+    {
+        for (label m = this->m() - 1; n < m; --m)
+        {
+            if (SMALL < mag((*this)(n, m) - (*this)(m, n)))
+            {
+                return false;
+            }
+        }
+    }
+
+   return true;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>

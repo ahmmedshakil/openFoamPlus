@@ -863,6 +863,64 @@ int main(int argc, char *argv[])
     {
         horizontalLine();
 
+        Info<< "## Query to determine if a square matrix is symmetric:" << nl;
+
+        {
+            const label mRows = 100;
+            SMatrix A(makeRandomMatrix<SMatrix>({mRows, mRows}, rndGen));
+
+            Info<< "# SquareMatrix<scalar>.symmetric():" << nl
+                << A.symmetric() << nl;
+
+            // Symmetrise
+            for (label n = 0; n < A.n() - 1; ++n)
+            {
+                for (label m = A.m() - 1; n < m; --m)
+                {
+                    A(n, m) = A(m, n);
+                }
+            }
+
+            Info<< "# SquareMatrix<scalar>.symmetric():" << nl
+                << A.symmetric() << nl;
+        }
+
+        {
+            const label mRows = 100;
+
+            SCMatrix A(mRows);
+
+            for (auto& val : A)
+            {
+                val.Re() = rndGen.GaussNormal<scalar>();
+                val.Im() = rndGen.GaussNormal<scalar>();
+            }
+
+            Info<< "# SquareMatrix<complex>.symmetric():" << nl
+                << A.symmetric() << nl;
+
+            // Symmetrise
+            for (label n = 0; n < A.n() - 1; ++n)
+            {
+                for (label m = A.m() - 1; n < m; --m)
+                {
+                    A(n, m) = A(m, n);
+                }
+            }
+
+            Info<< "# SquareMatrix<complex>.symmetric():" << nl
+                << A.symmetric() << nl;
+        }
+
+        horizontalLine();
+    }
+    #endif
+
+
+    #if 1
+    {
+        horizontalLine();
+
         Info<< "## SymmetricSquareMatrix<scalar> algorithms:" << nl;
 
         scalarSymmetricSquareMatrix symm(3, Zero);
