@@ -36,6 +36,7 @@ License
 using namespace Foam;
 using namespace Foam::MatrixTools;
 
+#define RUNALL true
 #define isEqual MatrixTools::equal
 
 void horizontalLine()
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
 
     Random rndGen(1234);
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -217,7 +218,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -298,7 +299,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -409,7 +410,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -493,7 +494,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -682,7 +683,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -803,7 +804,7 @@ int main(int argc, char *argv[])
                 << nl;
         }
 
-        #if 1
+        #if (0 | RUNALL)
         {
             Info<< nl << "# Implicit inner/outer products:" << nl;
 
@@ -859,7 +860,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -917,7 +918,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         horizontalLine();
 
@@ -955,7 +956,7 @@ int main(int argc, char *argv[])
     #endif
 
 
-    #if 1
+    #if (0 | RUNALL)
     {
         scalarSquareMatrix squareMatrix(3, Zero);
 
