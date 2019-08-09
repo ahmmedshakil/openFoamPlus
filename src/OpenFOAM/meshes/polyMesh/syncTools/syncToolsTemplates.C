@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2004-2011, 2015-2018 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2004-2011, 2015-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2017 OpenFOAM Foundation
@@ -34,6 +34,7 @@ License
 #include "transform.H"
 #include "transformList.H"
 #include "SubField.H"
+#include "SubList.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -98,7 +99,7 @@ void Foam::syncTools::syncPointMap
     // Values on shared points. Keyed on global shared index.
     Map<T> sharedPointValues(0);
 
-    if (pd.nGlobalPoints() > 0)
+    if (pd.nGlobalPoints())
     {
         // meshPoint per local index
         const labelList& sharedPtLabels = pd.sharedPointLabels();
@@ -135,7 +136,7 @@ void Foam::syncTools::syncPointMap
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.nPoints() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.nPoints())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
@@ -170,13 +171,13 @@ void Foam::syncTools::syncPointMap
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.nPoints() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.nPoints())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
 
-                UIPstream fromNb(procPatch.neighbProcNo(), pBufs);
-                Map<T> nbrPatchInfo(fromNb);
+                UIPstream fromNbr(procPatch.neighbProcNo(), pBufs);
+                Map<T> nbrPatchInfo(fromNbr);
 
                 // Transform
                 top(procPatch, nbrPatchInfo);
@@ -277,7 +278,7 @@ void Foam::syncTools::syncPointMap
     }
 
     // Synchronize multiple shared points.
-    if (pd.nGlobalPoints() > 0)
+    if (pd.nGlobalPoints())
     {
         // meshPoint per local index
         const labelList& sharedPtLabels = pd.sharedPointLabels();
@@ -401,7 +402,7 @@ void Foam::syncTools::syncEdgeMap
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.nEdges() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.nEdges())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
@@ -439,7 +440,7 @@ void Foam::syncTools::syncEdgeMap
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.nEdges() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.nEdges())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
@@ -921,6 +922,7 @@ void Foam::syncTools::syncEdgeList
     }
 }
 
+
 template<class T, class CombineOp, class TransformOp>
 void Foam::syncTools::syncBoundaryFaceList
 (
@@ -931,14 +933,16 @@ void Foam::syncTools::syncBoundaryFaceList
     const bool parRun
 )
 {
-    const label nBFaces = mesh.nBoundaryFaces();
+    // Offset (global to local) for start of boundaries
+    const label boundaryOffset = mesh.nInternalFaces();
 
-    if (faceValues.size() != nBFaces)
+    if (faceValues.size() != mesh.nBoundaryFaces())
     {
         FatalErrorInFunction
             << "Number of values " << faceValues.size()
             << " is not equal to the number of boundary faces in the mesh "
-            << nBFaces << abort(FatalError);
+            << mesh.nBoundaryFaces() << nl
+            << abort(FatalError);
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
@@ -951,15 +955,16 @@ void Foam::syncTools::syncBoundaryFaceList
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.size() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.size())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
 
-                label patchStart = procPatch.start()-mesh.nInternalFaces();
+                const label patchStart = procPatch.start()-boundaryOffset;
 
+                // Send slice of values on the patch
                 UOPstream toNbr(procPatch.neighbProcNo(), pBufs);
-                toNbr << SubField<T>(faceValues, procPatch.size(), patchStart);
+                toNbr<< SubList<T>(faceValues, procPatch.size(), patchStart);
             }
         }
 
@@ -971,23 +976,23 @@ void Foam::syncTools::syncBoundaryFaceList
 
         for (const polyPatch& pp : patches)
         {
-            if (isA<processorPolyPatch>(pp) && pp.size() > 0)
+            if (isA<processorPolyPatch>(pp) && pp.size())
             {
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
 
-                Field<T> nbrPatchInfo(procPatch.size());
+                Field<T> nbrVals(procPatch.size());
 
-                UIPstream fromNeighb(procPatch.neighbProcNo(), pBufs);
-                fromNeighb >> nbrPatchInfo;
+                UIPstream fromNbr(procPatch.neighbProcNo(), pBufs);
+                fromNbr >> nbrVals;
 
-                top(procPatch, nbrPatchInfo);
+                top(procPatch, nbrVals);
 
-                label bFacei = procPatch.start()-mesh.nInternalFaces();
+                label bFacei = procPatch.start()-boundaryOffset;
 
-                forAll(nbrPatchInfo, i)
+                for (T& nbrVal : nbrVals)
                 {
-                    cop(faceValues[bFacei++], nbrPatchInfo[i]);
+                    cop(faceValues[bFacei++], nbrVal);
                 }
             }
         }
@@ -1005,28 +1010,28 @@ void Foam::syncTools::syncBoundaryFaceList
             {
                 // Owner does all.
                 const cyclicPolyPatch& nbrPatch = cycPatch.neighbPatch();
-                const label ownStart = cycPatch.start()-mesh.nInternalFaces();
-                const label nbrStart = nbrPatch.start()-mesh.nInternalFaces();
 
-                const label sz = cycPatch.size();
+                const label patchSize = cycPatch.size();
+                const label ownStart = cycPatch.start()-boundaryOffset;
+                const label nbrStart = nbrPatch.start()-boundaryOffset;
 
                 // Transform (copy of) data on both sides
-                Field<T> ownVals(SubField<T>(faceValues, sz, ownStart));
+                Field<T> ownVals(SubList<T>(faceValues, patchSize, ownStart));
                 top(nbrPatch, ownVals);
 
-                Field<T> nbrVals(SubField<T>(faceValues, sz, nbrStart));
+                Field<T> nbrVals(SubList<T>(faceValues, patchSize, nbrStart));
                 top(cycPatch, nbrVals);
 
-                label i0 = ownStart;
-                forAll(nbrVals, i)
+                label bFacei = ownStart;
+                for (T& nbrVal : nbrVals)
                 {
-                    cop(faceValues[i0++], nbrVals[i]);
+                    cop(faceValues[bFacei++], nbrVal);
                 }
 
-                label i1 = nbrStart;
-                forAll(ownVals, i)
+                bFacei = nbrStart;
+                for (T& ownVal : ownVals)
                 {
-                    cop(faceValues[i1++], ownVals[i]);
+                    cop(faceValues[bFacei++], ownVal);
                 }
             }
         }
@@ -1040,17 +1045,27 @@ template<unsigned Width, class CombineOp>
 void Foam::syncTools::syncFaceList
 (
     const polyMesh& mesh,
+    const bool isBoundaryOnly,
     PackedList<Width>& faceValues,
     const CombineOp& cop,
     const bool parRun
 )
 {
-    if (faceValues.size() != mesh.nFaces())
+    // Offset (global to local) for start of boundaries
+    const label boundaryOffset = (isBoundaryOnly ? mesh.nInternalFaces() : 0);
+
+    if
+    (
+        faceValues.size()
+     != (isBoundaryOnly ? mesh.nBoundaryFaces() : mesh.nFaces())
+    )
     {
         FatalErrorInFunction
             << "Number of values " << faceValues.size()
-            << " is not equal to the number of faces in the mesh "
-            << mesh.nFaces() << abort(FatalError);
+            << " is not equal to the number of "
+            << (isBoundaryOnly ? "boundary" : "mesh") << " faces "
+            << (isBoundaryOnly ? mesh.nBoundaryFaces() : mesh.nFaces()) << nl
+            << abort(FatalError);
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
@@ -1068,10 +1083,15 @@ void Foam::syncTools::syncFaceList
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
 
+                const labelRange range
+                (
+                    procPatch.start()-boundaryOffset,
+                    procPatch.size()
+                );
+
                 // Send slice of values on the patch
                 UOPstream toNbr(procPatch.neighbProcNo(), pBufs);
-                toNbr
-                    << PackedList<Width>(faceValues, procPatch.range());
+                toNbr<< PackedList<Width>(faceValues, range);
             }
         }
 
@@ -1087,23 +1107,26 @@ void Foam::syncTools::syncFaceList
                 const processorPolyPatch& procPatch =
                     refCast<const processorPolyPatch>(pp);
 
+                const label patchSize = procPatch.size();
+
                 // Recv slice of values on the patch
-                PackedList<Width> recvInfo(procPatch.size());
+                PackedList<Width> recvInfo(patchSize);
                 {
                     UIPstream fromNbr(procPatch.neighbProcNo(), pBufs);
                     fromNbr >> recvInfo;
                 }
 
                 // Combine (bitwise)
-                forAll(procPatch, i)
+                label bFacei = procPatch.start()-boundaryOffset;
+                for (label i = 0; i < patchSize; ++i)
                 {
-                    const label meshFacei = procPatch.start()+i;
-
                     unsigned int recvVal = recvInfo[i];
-                    unsigned int faceVal = faceValues[meshFacei];
+                    unsigned int faceVal = faceValues[bFacei];
 
                     cop(faceVal, recvVal);
-                    faceValues.set(meshFacei, faceVal);
+                    faceValues.set(bFacei, faceVal);
+
+                    ++bFacei;
                 }
             }
         }
@@ -1123,20 +1146,24 @@ void Foam::syncTools::syncFaceList
                 // Owner does all.
                 const cyclicPolyPatch& nbrPatch = cycPatch.neighbPatch();
 
-                for (label i = 0; i < cycPatch.size(); ++i)
-                {
-                    const label meshFace0 = cycPatch.start()+i;
-                    const label meshFace1 = nbrPatch.start()+i;
+                const label patchSize = cycPatch.size();
 
-                    unsigned int val0 = faceValues[meshFace0];
-                    unsigned int val1 = faceValues[meshFace1];
+                label face0 = cycPatch.start()-boundaryOffset;
+                label face1 = nbrPatch.start()-boundaryOffset;
+                for (label i = 0; i < patchSize; ++i)
+                {
+                    unsigned int val0 = faceValues[face0];
+                    unsigned int val1 = faceValues[face1];
 
                     unsigned int t = val0;
                     cop(t, val1);
-                    faceValues[meshFace0] = t;
+                    faceValues[face0] = t;
 
                     cop(val1, val0);
-                    faceValues[meshFace1] = val1;
+                    faceValues[face1] = val1;
+
+                    ++face0;
+                    ++face1;
                 }
             }
         }
@@ -1177,6 +1204,43 @@ void Foam::syncTools::swapBoundaryCellList
         }
     }
     syncTools::swapBoundaryFaceList(mesh, neighbourCellData);
+}
+
+
+template<unsigned Width, class CombineOp>
+void Foam::syncTools::syncFaceList
+(
+    const polyMesh& mesh,
+    PackedList<Width>& faceValues,
+    const CombineOp& cop,
+    const bool parRun
+)
+{
+    syncFaceList(mesh, false, faceValues, cop, parRun);
+}
+
+
+template<unsigned Width, class CombineOp>
+void Foam::syncTools::syncBoundaryFaceList
+(
+    const polyMesh& mesh,
+    PackedList<Width>& faceValues,
+    const CombineOp& cop,
+    const bool parRun
+)
+{
+    syncFaceList(mesh, true, faceValues, cop, parRun);
+}
+
+
+template<unsigned Width>
+void Foam::syncTools::swapBoundaryFaceList
+(
+    const polyMesh& mesh,
+    PackedList<Width>& faceValues
+)
+{
+    syncBoundaryFaceList(mesh, faceValues, eqOp<unsigned int>());
 }
 
 
