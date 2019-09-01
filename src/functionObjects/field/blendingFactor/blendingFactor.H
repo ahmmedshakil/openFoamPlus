@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2013-2016 OpenFOAM Foundation
@@ -30,9 +30,9 @@ Group
     grpFieldFunctionObjects
 
 Description
-    Calculates and outputs the blendingFactor as used by the bended convection
-    schemes.  The output is a volume field (cells) whose value is calculated via
-    the maximum blending factor for any cell face.
+    Calculates and outputs the \c blendingFactor as used by the blended
+    convection schemes. The output is a volume field (cells) whose value is
+    calculated via the maximum blending factor for any cell face.
 
     The weight of a blended scheme is given by a function of the blending
     factor, f:
@@ -60,22 +60,20 @@ Usage
     {
         type        blendingFactor;
         libs        ("libfieldFunctionObjects.so");
-
-        ...
-
-        // Name of field
         field       U;
+
+        // Optional base entries of fvMeshFunctionObject
     }
     \endverbatim
 
     Where the entries comprise:
     \table
-        Property     | Description             | Required    | Default value
-        type         | Type name: blendingFactor | yes       |
-        phi          | Name of flux field      | no          | phi
-        field        | Name of field to evaluate | yes       |
-        tolerance    | Tolerance for number of blended cells | no | 0.001
-        log          | Log to standard output  | no          | yes
+        Property     | Description               | Required    | Default value
+        type         | Type name: blendingFactor | yes         |
+        field        | Name of field to evaluate | yes         |
+        phi          | Name of flux field        | no          | phi
+        tolerance    | Tolerance for number of blended cells   | no | 0.001
+        log          | Log to standard output    | no          | yes
     \endtable
 
 See also
@@ -111,7 +109,7 @@ class blendingFactor
     public fieldExpression,
     public writeFile
 {
-    // Private member data
+    // Private Member Data
 
         //- Name of flux field, default is "phi"
         word phiName_;
@@ -164,7 +162,7 @@ public:
 
 
     //- Destructor
-    virtual ~blendingFactor();
+    virtual ~blendingFactor() = default;
 
 
     // Member Functions

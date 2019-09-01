@@ -50,7 +50,7 @@ void Foam::functionObjects::blendingFactor::writeFileHeader(Ostream& os) const
     writeTabbed(os, "Scheme1");
     writeTabbed(os, "Scheme2");
     writeTabbed(os, "Blended");
-    os  << endl;
+    os  << nl;
 }
 
 
@@ -102,31 +102,23 @@ Foam::functionObjects::blendingFactor::blendingFactor
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::functionObjects::blendingFactor::~blendingFactor()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::blendingFactor::read(const dictionary& dict)
 {
     if (fieldExpression::read(dict) && writeFile::read(dict))
     {
-        phiName_ = dict.lookupOrDefault<word>("phi", "phi");
+        phiName_ = dict.getOrDefault<word>("phi", "phi");
 
-        tolerance_ = 0.001;
-        if
-        (
-            dict.readIfPresent("tolerance", tolerance_)
-         && (tolerance_ < 0 || tolerance_ > 1)
-        )
-        {
-            FatalErrorInFunction
-                << "tolerance must be in the range 0 to 1.  Supplied value: "
-                << tolerance_ << exit(FatalError);
-        }
+        auto allowedRange = [&](const scalar tol){ return tol < 0 || 1 < tol; };
+
+        tolerance_ =
+            dict.getCheckOrDefault
+            (
+                "tolerance",
+                0.001,
+                allowedRange
+            );
 
         return true;
     }
@@ -137,30 +129,29 @@ bool Foam::functionObjects::blendingFactor::read(const dictionary& dict)
 
 bool Foam::functionObjects::blendingFactor::write()
 {
-    if (fieldExpression::write())
+    if (fieldExpression::write()) // Add if the scheme is blended
     {
         const volScalarField& indicator =
             lookupObject<volScalarField>(resultName_);
 
         // Generate scheme statistics
-        label nCellsScheme1 = 0;
-        label nCellsScheme2 = 0;
-        label nCellsBlended = 0;
-        forAll(indicator, celli)
-        {
-            scalar i = indicator[celli];
+        label nCellsScheme1 = Zero;
+        label nCellsScheme2 = Zero;
+        label nCellsBlended = Zero;
 
+        for (const auto& i : indicator)
+        {
             if (i < tolerance_)
             {
-                nCellsScheme1++;
+                ++nCellsScheme1;
             }
-            else if (i > (1 - tolerance_))
+            else if ((1 - tolerance_) < i)
             {
-                nCellsScheme2++;
+                ++nCellsScheme2;
             }
             else
             {
-                nCellsBlended++;
+                ++nCellsBlended;
             }
         }
 
@@ -176,10 +167,10 @@ bool Foam::functionObjects::blendingFactor::write()
         writeTime(file());
 
         file()
-            << token::TAB << nCellsScheme1
-            << token::TAB << nCellsScheme2
-            << token::TAB << nCellsBlended
-            << endl;
+            << tab << nCellsScheme1
+            << tab << nCellsScheme2
+            << tab << nCellsBlended
+            << nl;
     }
 
     return true;

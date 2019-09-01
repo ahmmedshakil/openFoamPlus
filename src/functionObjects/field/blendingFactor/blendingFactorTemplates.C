@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2013-2016 OpenFOAM Foundation
@@ -51,7 +51,6 @@ void Foam::functionObjects::blendingFactor::calcBlendingFactor
 
     const fv::gaussConvectionScheme<Type>& gcs =
         refCast<const fv::gaussConvectionScheme<Type>>(cs);
-
 
     const surfaceInterpolationScheme<Type>& interpScheme = gcs.interpScheme();
 
