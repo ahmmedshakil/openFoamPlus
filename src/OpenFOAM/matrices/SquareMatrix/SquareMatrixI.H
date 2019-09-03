@@ -270,6 +270,32 @@ inline bool Foam::SquareMatrix<Type>::symmetric() const
 }
 
 
+template<class Type>
+inline bool Foam::SquareMatrix<Type>::tridiagonal() const
+{
+    for (label i = 0; i < this->m(); ++i)
+    {
+        for (label j = 0; j < this->n(); ++j)
+        {
+            const Type& val = (*this)(i, j);
+
+            if ((i == j) || (i - 1 == j) || (i + 1 == j))
+            {
+                if (mag(val) < SMALL)
+                {
+                    return false;
+                }
+            }
+            else if (SMALL < mag(val))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>

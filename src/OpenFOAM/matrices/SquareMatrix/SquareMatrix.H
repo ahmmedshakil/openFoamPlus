@@ -145,6 +145,9 @@ public:
         //- Return true if the square matrix is effectively symmetric/Hermitian
         inline bool symmetric() const;
 
+        //- Return true if the square matrix is reduced tridiagonal
+        inline bool tridiagonal() const;
+
     // Member Operators
 
         //- Assign all elements to zero
