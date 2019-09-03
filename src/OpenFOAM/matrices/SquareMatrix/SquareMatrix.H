@@ -84,6 +84,9 @@ public:
         template<class AnyType>
         inline SquareMatrix(const label n, const Identity<AnyType>);
 
+        template<class AnyType>
+        inline SquareMatrix(const labelPair& dims, const Identity<AnyType>);
+
         //- Construct given number of rows/columns (checked to be equal)
         //  For constructor consistency in rectangular matrices
         inline explicit SquareMatrix(const labelPair& dims);
@@ -128,6 +131,9 @@ public:
         //- Resize the matrix preserving the elements
         inline void resize(const label m);
 
+        //- Resize the matrix preserving the elements (compatibility)
+        inline void resize(const label m, const label n);
+
         //- Resize the matrix preserving the elements
         inline void setSize(const label m);
 
@@ -138,7 +144,6 @@ public:
 
         //- Return true if the square matrix is effectively symmetric/Hermitian
         inline bool symmetric() const;
-
 
     // Member Operators
 

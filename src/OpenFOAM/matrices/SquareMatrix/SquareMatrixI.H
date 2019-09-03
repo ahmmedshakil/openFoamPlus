@@ -90,6 +90,25 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
 
 
 template<class Type>
+template<class AnyType>
+inline Foam::SquareMatrix<Type>::SquareMatrix
+(
+    const labelPair& dims,
+    const Identity<AnyType>
+)
+:
+    Matrix<SquareMatrix<Type>, Type>(dims, Zero)
+{
+    CHECK_MATRIX_IS_SQUARE(dims.first(), dims.second());
+
+    for (label i = 0; i < dims.first(); ++i)
+    {
+        this->operator()(i, i) = pTraits<Type>::one;
+    }
+}
+
+
+template<class Type>
 inline Foam::SquareMatrix<Type>::SquareMatrix
 (
     const labelPair& dims
@@ -201,6 +220,20 @@ Foam::SquareMatrix<Type>::clone() const
 template<class Type>
 inline void Foam::SquareMatrix<Type>::resize(const label m)
 {
+    Matrix<SquareMatrix<Type>, Type>::resize(m, m);
+}
+
+
+template<class Type>
+inline void Foam::SquareMatrix<Type>::resize(const label m, const label n)
+{
+    if (m != n)
+    {
+        FatalErrorInFunction
+            << "Disallowed use of resize() for SquareMatrix."
+            << abort(FatalError);
+    }
+
     Matrix<SquareMatrix<Type>, Type>::resize(m, m);
 }
 
