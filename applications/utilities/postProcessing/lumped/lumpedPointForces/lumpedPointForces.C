@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,8 @@ Application
     lumpedPointForces
 
 Description
-    Extract force/moment information from existing calculations based
-    on the segmentation of the pressure integration zones.
+    Extract force/moment information from simulation results that
+    use the lumped points movement description.
 
 \*---------------------------------------------------------------------------*/
 
@@ -35,7 +35,7 @@ Description
 #include "timeSelector.H"
 #include "volFields.H"
 #include "IOobjectList.H"
-
+#include "foamVtkSeriesWriter.H"
 #include "lumpedPointTools.H"
 #include "lumpedPointIOMovement.H"
 
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 {
     argList::addNote
     (
-        "Extract force/moment information from existing calculations based"
-        " on the lumpedPoints pressure zones."
+        "Extract force/moment information from simulation results that"
+        " use the lumped points movement description."
     );
 
     argList::addBoolOption
@@ -100,31 +100,33 @@ int main(int argc, char *argv[])
     const bool withVTK = args.found("vtk");
 
     #include "createTime.H"
+
     instantList timeDirs = timeSelector::select0(runTime, args);
 
     #include "createNamedMesh.H"
 
-    autoPtr<lumpedPointIOMovement> movement = lumpedPointIOMovement::New
-    (
-        runTime
-    );
+    autoPtr<lumpedPointIOMovement> movement = lumpedPointIOMovement::New(mesh);
 
     if (!movement.valid())
     {
-        Info<< "no valid movement given" << endl;
+        Info<< "No valid movement found" << endl;
         return 1;
     }
 
-    const labelList patchLst = lumpedPointTools::lumpedPointPatchList(mesh);
-    if (patchLst.empty())
+    const label nPatches = lumpedPointTools::setPatchControls(mesh);
+    if (!nPatches)
     {
-        Info<< "no patch list found" << endl;
+        Info<< "No point patches with lumped movement found" << endl;
         return 2;
     }
 
-    movement().setMapping(mesh, patchLst, lumpedPointTools::points0Field(mesh));
+    Info<<"Lumped point patch controls set on " << nPatches
+        << " patches" << nl;
 
+
+    vtk::seriesWriter forceSeries;
     List<vector> forces, moments;
+
     forAll(timeDirs, timei)
     {
         runTime.setTime(timeDirs[timei], timei);
@@ -162,11 +164,21 @@ int main(int argc, char *argv[])
                     forces,
                     moments
                 );
+
+                forceSeries.append(runTime.timeIndex(), outputName);
             }
         }
     }
 
-    Info<< "End\n" << endl;
+
+    // Create file series
+
+    if (forceSeries.size())
+    {
+        forceSeries.write("forces.vtp");
+    }
+
+    Info<< "\nEnd\n" << endl;
 
     return 0;
 }

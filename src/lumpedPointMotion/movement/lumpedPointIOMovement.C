@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -30,16 +30,16 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(lumpedPointIOMovement, 0);
+    defineTypeName(lumpedPointIOMovement);
 }
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-const Foam::lumpedPointIOMovement*
-Foam::lumpedPointIOMovement::lookupInRegistry(const objectRegistry& obr)
+Foam::lumpedPointIOMovement*
+Foam::lumpedPointIOMovement::getMovementObject(const objectRegistry& obr)
 {
-    return obr.findObject<lumpedPointIOMovement>
+    return obr.getObjectPtr<lumpedPointIOMovement>
     (
         lumpedPointMovement::canonicalName
     );
@@ -118,7 +118,7 @@ bool Foam::lumpedPointIOMovement::writeData(Ostream& os) const
 }
 
 
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const lumpedPointIOMovement& obj)
 {

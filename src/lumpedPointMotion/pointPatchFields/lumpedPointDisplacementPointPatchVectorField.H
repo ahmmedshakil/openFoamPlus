@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -40,6 +40,7 @@ Description
     {
         type    lumpedPointDisplacement;
         value   uniform (0 0 0);
+        controllers ( controllerName1 controllerName2 );
     }
     \endverbatim
 
@@ -76,7 +77,14 @@ class lumpedPointDisplacementPointPatchVectorField
 :
     public fixedValuePointPatchField<vector>
 {
-    // Private data
+    // Private Data
+
+        //- Names of the movement controller(s) in use
+        wordList controllers_;
+
+        //- Backup method for getting "points0" without a motion solver
+        mutable autoPtr<pointIOField> points0Ptr_;
+
 
     //- Convenience typedefs
     typedef lumpedPointDisplacementPointPatchVectorField patchType;
@@ -165,7 +173,27 @@ public:
     virtual ~lumpedPointDisplacementPointPatchVectorField();
 
 
-    // Member functions
+    // Member Functions
+
+        //- The controller names for this patch
+        const wordList& controllers() const
+        {
+            return controllers_;
+        }
+
+        //- Set all patch controls for patches of this type
+        static label setPatchControls
+        (
+            const pointVectorField& pvf,
+            const pointField& points0
+        );
+
+        //- Set all patch controls for patches of this type
+        static label setInterpolators
+        (
+            const pointVectorField& pvf,
+            const pointField& points0
+        );
 
         //- The ids for all patches of this type
         static labelList patchIds(const pointVectorField& pvf);

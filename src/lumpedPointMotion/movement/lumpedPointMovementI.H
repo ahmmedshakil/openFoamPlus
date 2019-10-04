@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2017-2018 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2017-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,31 +25,13 @@ License
 
 inline bool Foam::lumpedPointMovement::empty() const
 {
-    return locations_.empty();
+    return state0_.empty();
 }
 
 
 inline Foam::label Foam::lumpedPointMovement::size() const
 {
-    return locations_.size();
-}
-
-
-inline const Foam::vector& Foam::lumpedPointMovement::axis() const
-{
-    return axis_;
-}
-
-
-inline const Foam::scalarField& Foam::lumpedPointMovement::locations() const
-{
-    return locations_;
-}
-
-
-inline Foam::scalar Foam::lumpedPointMovement::division() const
-{
-    return division_;
+    return state0_.size();
 }
 
 
@@ -65,21 +47,19 @@ inline void Foam::lumpedPointMovement::ownerId(label id)
 }
 
 
-inline const Foam::scalarField& Foam::lumpedPointMovement::thresholds() const
+inline bool
+Foam::lumpedPointMovement::hasPatchControl(const label patchIndex) const
 {
-    if (!thresholdPtr_)
-    {
-        calcThresholds();
-    }
-
-    return *thresholdPtr_;
+    return patchControls_.found(patchIndex);
 }
 
 
-inline Foam::label
-Foam::lumpedPointMovement::threshold(const point& position) const
+inline bool
+Foam::lumpedPointMovement::hasInterpolator(const label patchIndex) const
 {
-    return threshold(position & axis_);
+    const auto iter = patchControls_.cfind(patchIndex);
+
+    return (iter.good() && iter().interp_.size());
 }
 
 
@@ -96,7 +76,6 @@ inline Foam::externalFileCoupler& Foam::lumpedPointMovement::coupler()
 }
 
 
-//- The initial state (positions/rotations)
 inline const Foam::lumpedPointState& Foam::lumpedPointMovement::state0() const
 {
     return state0_;
@@ -106,6 +85,21 @@ inline const Foam::lumpedPointState& Foam::lumpedPointMovement::state0() const
 inline const Foam::lumpedPointState& Foam::lumpedPointMovement::state() const
 {
     return state_;
+}
+
+
+inline const Foam::point& Foam::lumpedPointMovement::origin() const
+{
+    return origin_;
+}
+
+
+inline void Foam::lumpedPointMovement::scalePoints
+(
+    lumpedPointState& state
+) const
+{
+    state.scalePoints(scaleInput_[scalingType::LENGTH]);
 }
 
 
@@ -153,16 +147,22 @@ Foam::lumpedPointMovement::outputFormat() const
 }
 
 
-inline bool Foam::lumpedPointMovement::hasMapping() const
+inline Foam::quaternion::eulerOrder
+Foam::lumpedPointMovement::rotationOrder() const
 {
-    return !faceZones_.empty();
+    return state0().rotationOrder();
 }
 
 
-inline const Foam::List<Foam::labelList>&
-Foam::lumpedPointMovement::zones() const
+inline bool Foam::lumpedPointMovement::degrees() const
 {
-    return faceZones_;
+    return state0().degrees();
+}
+
+
+inline bool Foam::lumpedPointMovement::hasMapping() const
+{
+    return !patchControls_.empty();
 }
 
 
