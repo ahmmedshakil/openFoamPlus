@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2016 OpenFOAM Foundation
@@ -30,9 +30,9 @@ Group
     grpWallFunctions
 
 Description
-    This boundary condition provides a turbulent kinematic viscosity for
-    atmospheric velocity profiles.  It is desinged to be used in conjunction
-    with the atmBoundaryLayerInletVelocity boundary condition.  The values
+    This boundary condition provides a turbulent kinematic viscosity, \f$nut\f$,
+    for atmospheric velocity profiles.  It is designed to be used in conjunction
+    with the atmBoundaryLayerInletVelocity boundary condition. The values
     are calculated using:
 
         \f[

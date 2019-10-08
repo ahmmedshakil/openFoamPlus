@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2014-2018 OpenFOAM Foundation
@@ -30,7 +30,7 @@ Group
     grpRASBoundaryConditions grpInletBoundaryConditions
 
 Description
-    This boundary condition specifies an inlet value for the turbulence
+    This boundary condition specifies an inlet value for the turbulent
     kinetic energy, \f$k\f$, appropriate for atmospheric boundary layers.
 
     See Foam::atmBoundaryLayer for details.
@@ -40,7 +40,7 @@ Description
     ground
     {
         type            atmBoundaryLayerInletK;
-        z               (0 0 1);
+        zDir            (0 0 1);
         Uref            10.0;
         Zref            20.0;
         z0              uniform 0.1;

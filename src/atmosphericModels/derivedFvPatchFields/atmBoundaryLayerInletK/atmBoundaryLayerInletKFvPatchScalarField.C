@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2018 OpenFOAM Foundation
@@ -61,7 +61,7 @@ atmBoundaryLayerInletKFvPatchScalarField
     inletOutletFvPatchScalarField(p, iF),
     atmBoundaryLayer(iF.time(), p.patch(), dict)
 {
-    phiName_ = dict.lookupOrDefault<word>("phi", "phi");
+    phiName_ = dict.getOrDefault<word>("phi", "phi");
 
     refValue() = k(patch().Cf());
     refGrad() = 0;

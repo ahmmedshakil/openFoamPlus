@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2018 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2018-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2014-2016 OpenFOAM Foundation
@@ -60,8 +60,8 @@ atmBoundaryLayer::atmBoundaryLayer
     patch_(pp),
     flowDir_(TimeFunction1<vector>(time, "flowDir", dict)),
     zDir_(TimeFunction1<vector>(time, "zDir", dict)),
-    kappa_(dict.lookupOrDefault<scalar>("kappa", 0.41)),
-    Cmu_(dict.lookupOrDefault<scalar>("Cmu", 0.09)),
+    kappa_(dict.getOrDefault<scalar>("kappa", 0.41)),
+    Cmu_(dict.getOrDefault<scalar>("Cmu", 0.09)),
     Uref_(TimeFunction1<scalar>(time, "Uref", dict)),
     Zref_(TimeFunction1<scalar>(time, "Zref", dict)),
     z0_(PatchFunction1<scalar>::New(pp, "z0", dict)),

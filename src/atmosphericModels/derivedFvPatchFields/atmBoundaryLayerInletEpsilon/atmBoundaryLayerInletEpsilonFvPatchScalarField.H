@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2010-2011 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2010-2011, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2011-2018 OpenFOAM Foundation
@@ -30,8 +30,9 @@ Group
     grpRASBoundaryConditions grpInletBoundaryConditions
 
 Description
-    This boundary condition specifies an inlet value for the turbulence
-    dissipation, \f$\epsilon\f$, appropriate for atmospheric boundary layers.
+    This boundary condition specifies an inlet value for the turbulent
+    kinetic energy dissipation rate, \f$\epsilon\f$, appropriate for
+    atmospheric boundary layers.
 
     See Foam::atmBoundaryLayer for details.
 
@@ -40,7 +41,7 @@ Description
     ground
     {
         type            atmBoundaryLayerInletEpsilon;
-        z               (0 0 1);
+        zDir            (0 0 1);
         Uref            10.0;
         Zref            20.0;
         z0              uniform 0.1;

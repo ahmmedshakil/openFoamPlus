@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2015 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2015, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2014-2018 OpenFOAM Foundation
@@ -81,9 +81,9 @@ Usage
         Property     | Description                      | Required  | Default
         flowDir      | Flow direction                   | yes       |
         zDir         | Vertical direction               | yes       |
-        kappa        | von Karman's constant            | no        | 0.41
+        kappa        | Von Karman's constant            | no        | 0.41
         Cmu          | Turbulence viscosity coefficient | no        | 0.09
-        Uref         | Reference velocity [m/s]         | yes       |
+        Uref         | Reference speed [m/s]            | yes       |
         Zref         | Reference height [m]             | yes       |
         z0           | Surface roughness height [m]     | yes       |
         zGround      | Minimum z-coordinate [m]         | yes       |
@@ -152,7 +152,7 @@ class atmBoundaryLayer
         //- Turbulent viscosity coefficient
         const scalar Cmu_;
 
-        //- Reference velocity
+        //- Reference speed
         TimeFunction1<scalar> Uref_;
 
         //- Reference height
