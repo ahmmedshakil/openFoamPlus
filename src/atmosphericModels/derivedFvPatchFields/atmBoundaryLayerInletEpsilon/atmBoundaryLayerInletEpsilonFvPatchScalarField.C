@@ -67,14 +67,7 @@ atmBoundaryLayerInletEpsilonFvPatchScalarField
     refGrad() = 0;
     valueFraction() = 1;
 
-    if (dict.found("value"))
-    {
-        scalarField::operator=(scalarField("value", dict, p.size()));
-    }
-    else
-    {
-        scalarField::operator=(refValue());
-    }
+    scalarField::operator=(refValue());
 }
 
 

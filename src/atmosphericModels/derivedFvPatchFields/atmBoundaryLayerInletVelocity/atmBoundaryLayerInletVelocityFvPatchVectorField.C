@@ -67,14 +67,7 @@ atmBoundaryLayerInletVelocityFvPatchVectorField
     refGrad() = Zero;
     valueFraction() = 1;
 
-    if (dict.found("value"))
-    {
-        vectorField::operator=(vectorField("value", dict, p.size()));
-    }
-    else
-    {
-        vectorField::operator=(refValue());
-    }
+    vectorField::operator=(refValue());
 }
 
 
