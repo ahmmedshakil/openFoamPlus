@@ -2,7 +2,6 @@
 cd ${0%/*} || exit 1                        # Run from this directory
 . $WM_PROJECT_DIR/bin/tools/RunFunctions    # Tutorial run functions
 
-
 runApplication blockMesh
 
 #- Run serial
@@ -14,5 +13,6 @@ runParallel $(getApplication)
 runApplication reconstructPar
 
 runApplication postChannel
+runApplication postProcess -func CourantNo -latestTime
 
 #------------------------------------------------------------------------------

@@ -47,6 +47,14 @@ runTimeModifiable true;
 
 functions
 {
+    Co1
+    {
+        type        CourantNo;
+        libs        ("libfieldFunctionObjects.so");
+        writeControl    writeTime;
+        result          Co2;
+    }
+
     fieldAverage1
     {
         type            fieldAverage;
@@ -66,6 +74,13 @@ functions
             {
                 mean        on;
                 prime2Mean  on;
+                base        time;
+            }
+
+            Co2
+            {
+                mean        on;
+                prime2Mean  off;
                 base        time;
             }
         );
