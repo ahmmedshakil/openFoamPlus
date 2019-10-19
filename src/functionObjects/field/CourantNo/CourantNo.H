@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2015-2016 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2015-2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
                             | Copyright (C) 2013-2016 OpenFOAM Foundation
@@ -30,18 +30,40 @@ Group
     grpFieldFunctionObjects
 
 Description
-    This function object calculates and outputs the Courant number as a
-    volScalarField.  The field is stored on the mesh database so that it can
-    be retrieved and used for other applications.
+    This function object calculates and outputs the Courant number, i.e. \c Co:
+
+    \f[
+        \text{Co} =
+            \frac{\delta t}{2}
+            \frac{\sum_\text{facei} | \phi_\text{facei} |}{V_\text{cell} \rho}
+    \f]
+    where
+    * \c Co the Courant number as a \c volScalarField
+    * \f$ \delta t\f$ the current time-step of the simulation
+    * \f$ \phi_\text{facei} \f$ the volumetric flux through face \c facei
+    * \f$ \text{facei} \f$ the index of the given cell face
+    * \f$ V_\text{cell} \f$ the cell volume
+    * \f$ \rho \f$ the fluid density
+
+    Reference:
+    \verbatim
+        Standard expression:
+            Courant, R., Friedrichs, K., & Lewy, H. (1967).
+            On the partial difference equations of mathematical physics.
+            IBM Journal of Research and Development, 11(2), 215-234.
+            doi:10.1147/rd.112.0215
+    \endverbatim
 
 Usage
     Example of function object specification to calculate the Courant number:
     \verbatim
-    CourantNo1
+    Co1
     {
+        // Mandatory entries
         type        CourantNo;
         libs        ("libfieldFunctionObjects.so");
-        ...
+    
+        // Optional fieldExpression entries
     }
     \endverbatim
 
@@ -51,9 +73,13 @@ Usage
         type         | Type name: CourantNo    | yes         |
         rho          | Name of density field   | no          | rho
         field        | Name of flux field      | no          | phi
-        result       | Name of Courant number field | no     | \<function name\>
+        result       | Name of Courant number field | no     | Co
         log          | Log to standard output  | no          | yes
     \endtable
+
+Note
+    The field is stored on the mesh database using the default name \c Co
+    so that it can be retrieved and used for other applications.
 
 See also
     Foam::functionObjects::fieldExpression
@@ -85,7 +111,7 @@ class CourantNo
 :
     public fieldExpression
 {
-    // Private data
+    // Private Data
 
         //- Name of density field (optional)
         word rhoName_;
@@ -121,7 +147,7 @@ public:
 
 
     //- Destructor
-    virtual ~CourantNo();
+    virtual ~CourantNo() = default;
 
 
     // Member Functions
