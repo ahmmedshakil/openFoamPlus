@@ -39,37 +39,51 @@ namespace RASModels
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> v2f<BasicTurbulenceModel>::Ts() const
+tmp<volScalarField> v2f<BasicTurbulenceModel>::Ts
+(
+    const volScalarField& C
+) const
 {
     // SAF: limiting thermo->nu(). If psiThermo is used rho might be < 0
     // temporarily when p < 0 then nu < 0 which needs limiting
+    // (BL:Eq. 8 & Table 5)
     return
         max
         (
-            k_/epsilon_,
-            6.0*sqrt
+            min
+            (
+                k_/epsilon_,
+                0.6*k_/C
+            ),
+            CT_*sqrt
             (
                 max
                 (
                     this->nu(),
                     dimensionedScalar(this->nu()().dimensions(), Zero)
-                )
-              / epsilon_
+                )/epsilon_
             )
         );
 }
 
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> v2f<BasicTurbulenceModel>::Ls() const
+tmp<volScalarField> v2f<BasicTurbulenceModel>::Ls
+(
+    const volScalarField& C
+) const
 {
     // SAF: limiting thermo->nu(). If psiThermo is used rho might be < 0
     // temporarily when p < 0 then nu < 0 which needs limiting
+    // (BL:Eq. 8 & Table 5)
     return
-        CL_
-      * max
+        CL_*max
         (
-            pow(k_, 1.5)/epsilon_,
+            min
+            (
+                pow(k_, 1.5)/epsilon_,
+                pow(k_, 1.5)/C
+            ),
             Ceta_*pow025
             (
                 pow3
@@ -88,7 +102,13 @@ tmp<volScalarField> v2f<BasicTurbulenceModel>::Ls() const
 template<class BasicTurbulenceModel>
 void v2f<BasicTurbulenceModel>::correctNut()
 {
-    this->nut_ = min(CmuKEps_*sqr(k_)/epsilon_, this->Cmu_*v2_*Ts());
+    // (D:Eq. 7)
+    this->nut_ =
+        min
+        (
+            CmuKEps_*sqr(k_)/epsilon_,
+            Cmu_*v2_*T_
+        );
     this->nut_.correctBoundaryConditions();
     fv::options::New(this->mesh_).correct(this->nut_);
 
@@ -126,7 +146,7 @@ v2f<BasicTurbulenceModel>::v2f
 
     Cmu_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Cmu",
             this->coeffDict_,
@@ -135,7 +155,7 @@ v2f<BasicTurbulenceModel>::v2f
     ),
     CmuKEps_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "CmuKEps",
             this->coeffDict_,
@@ -144,7 +164,7 @@ v2f<BasicTurbulenceModel>::v2f
     ),
     C1_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "C1",
             this->coeffDict_,
@@ -153,52 +173,88 @@ v2f<BasicTurbulenceModel>::v2f
     ),
     C2_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "C2",
             this->coeffDict_,
             0.3
         )
     ),
-    CL_
-    (
-        dimensioned<scalar>::lookupOrAddToDict
-        (
-            "CL",
-            this->coeffDict_,
-            0.23
-        )
-    ),
     Ceta_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Ceta",
             this->coeffDict_,
             70.0
         )
     ),
+    Ceps1a_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "Ceps1a",
+            this->coeffDict_,
+            1.4
+        )
+    ),
+    Ceps1b_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "Ceps1b",
+            this->coeffDict_,
+            1.0
+        )
+    ),
+    Ceps1c_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "Ceps1c",
+            this->coeffDict_,
+            0.050
+        )
+    ),
     Ceps2_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Ceps2",
             this->coeffDict_,
             1.9
         )
     ),
-    Ceps3_
+    CRDT_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
-            "Ceps3",
+            "CRDT",
             this->coeffDict_,
             -0.33
         )
     ),
+    CT_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "CT",
+            this->coeffDict_,
+            6.0
+        )
+    ),
+    CL_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "CL",
+            this->coeffDict_,
+            0.23
+        )
+    ),
     sigmaK_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "sigmaK",
             this->coeffDict_,
@@ -207,11 +263,20 @@ v2f<BasicTurbulenceModel>::v2f
     ),
     sigmaEps_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "sigmaEps",
             this->coeffDict_,
             1.3
+        )
+    ),
+    sigmaV2_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "sigmaV2",
+            this->coeffDict_,
+            1.0
         )
     ),
 
@@ -263,8 +328,25 @@ v2f<BasicTurbulenceModel>::v2f
         ),
         this->mesh_
     ),
+    T_
+    (
+        IOobject
+        (
+            "T",
+            this->runTime_.timeName(),
+            this->mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        this->mesh_,
+        dimensionedScalar(dimTime, Zero)
+    ),
+
     v2Min_(dimensionedScalar("v2Min", v2_.dimensions(), SMALL)),
-    fMin_(dimensionedScalar("fMin", f_.dimensions(), Zero))
+    fMin_(dimensionedScalar("fMin", f_.dimensions(), Zero)),
+    TMin_(dimensionedScalar("TMin", dimTime, SMALL)),
+    L2Min_(dimensionedScalar("L2Min", sqr(dimLength), SMALL))
 {
     bound(k_, this->kMin_);
     bound(epsilon_, this->epsilonMin_);
@@ -274,6 +356,21 @@ v2f<BasicTurbulenceModel>::v2f
     if (type == typeName)
     {
         this->printCoeffs(type);
+    }
+
+    if
+    (
+        mag(sigmaK_.value()) < VSMALL
+     || mag(sigmaEps_.value()) < VSMALL
+     || mag(sigmaV2_.value()) < VSMALL
+    )
+    {
+        FatalErrorInFunction
+            << "Tiny magnitude for a model constant:" << nl
+            << "sigmaK = " << sigmaK_ << nl
+            << "sigmaEps = " << sigmaEps_ << nl
+            << "sigmaV2 = " << sigmaV2_ << nl
+            << exit(FatalError);
     }
 }
 
@@ -289,12 +386,17 @@ bool v2f<BasicTurbulenceModel>::read()
         CmuKEps_.readIfPresent(this->coeffDict());
         C1_.readIfPresent(this->coeffDict());
         C2_.readIfPresent(this->coeffDict());
-        CL_.readIfPresent(this->coeffDict());
         Ceta_.readIfPresent(this->coeffDict());
+        Ceps1a_.readIfPresent(this->coeffDict());
+        Ceps1b_.readIfPresent(this->coeffDict());
+        Ceps1c_.readIfPresent(this->coeffDict());
         Ceps2_.readIfPresent(this->coeffDict());
-        Ceps3_.readIfPresent(this->coeffDict());
+        CRDT_.readIfPresent(this->coeffDict());
+        CT_.readIfPresent(this->coeffDict());
+        CL_.readIfPresent(this->coeffDict());
         sigmaK_.readIfPresent(this->coeffDict());
         sigmaEps_.readIfPresent(this->coeffDict());
+        sigmaV2_.readIfPresent(this->coeffDict());
 
         return true;
     }
@@ -311,7 +413,7 @@ void v2f<BasicTurbulenceModel>::correct()
         return;
     }
 
-    // Local references
+    // Construct local convenience references
     const alphaField& alpha = this->alpha_;
     const rhoField& rho = this->rho_;
     const surfaceScalarField& alphaRhoPhi = this->alphaRhoPhi_;
@@ -321,42 +423,68 @@ void v2f<BasicTurbulenceModel>::correct()
 
     eddyViscosity<RASModel<BasicTurbulenceModel>>::correct();
 
-    volScalarField divU(fvc::div(fvc::absolute(this->phi(), U)));
+    const volScalarField::Internal divU
+    (
+        fvc::div
+        (
+            fvc::absolute(this->phi(), U)
+        )
+    );
 
-    // Use N=6 so that f=0 at walls
-    const dimensionedScalar N("N", dimless, 6.0);
+    // (LK:p. 54; D:Eq. 2)
+    tmp<volTensorField> tgradU(fvc::grad(U));
 
-    const volTensorField gradU(fvc::grad(U));
-    const volScalarField S2(2*magSqr(dev(symm(gradU))));
+    const volSymmTensorField S("Sij", symm(tgradU()));
 
-    const volScalarField G(this->GName(), nut*S2);
-    const volScalarField Ts(this->Ts());
-    const volScalarField L2(type() + ":L2", sqr(Ls()));
-    const volScalarField v2fAlpha
+    const volScalarField G(this->GName(), nut*(2.0*(dev(S) && tgradU)));
+
+    // (LK:Eqs. 4-5)
+    volScalarField C
+    (
+        "C",
+        (sqrt(6.0)*Cmu_)*(sqrt(S && S)*v2_) + this->epsilonMin_
+    );
+
+    // (LK:Eq. 4)
+    T_ = this->Ts(C);
+    bound(T_, TMin_);
+
+    // (LK:Eq. 5)
+    const volScalarField L2(type() + ":L2", sqr(Ls(C)) + L2Min_);
+
+    // (LK:Eq. 15; D:Eq. 6)
+    const volScalarField::Internal v2fAlpha
     (
         type() + ":alpha",
-        1.0/Ts*((C1_ - N)*v2_ - 2.0/3.0*k_*(C1_ - 1.0))
+        1.0/T_()*((C1_ - 6.0)*v2_() - 2.0/3.0*k_()*(C1_ - 1.0))
     );
 
-    const volScalarField Ceps1
+    // (LK:Eq. 17)
+    const volScalarField::Internal Ceps1
     (
         "Ceps1",
-        1.4*(1.0 + 0.05*min(sqrt(k_/v2_), scalar(100)))
+        Ceps1a_*(Ceps1b_ + Ceps1c_*sqrt(k_()/v2_()))
     );
+
 
     // Update epsilon (and possibly G) at the wall
     epsilon_.boundaryFieldRef().updateCoeffs();
 
-    // Dissipation equation
+    // Turbulent kinetic energy dissipation rate equation (LK:Eq. 7)
+    // k/T ~ epsilon
     tmp<fvScalarMatrix> epsEqn
     (
         fvm::ddt(alpha, rho, epsilon_)
       + fvm::div(alphaRhoPhi, epsilon_)
       - fvm::laplacian(alpha*rho*DepsilonEff(), epsilon_)
      ==
-        Ceps1*alpha*rho*G/Ts
-      - fvm::SuSp(((2.0/3.0)*Ceps1 + Ceps3_)*alpha*rho*divU, epsilon_)
-      - fvm::Sp(Ceps2_*alpha*rho/Ts, epsilon_)
+        Ceps1*alpha()*rho()*G()/T_()
+      - fvm::SuSp
+        (
+            (2.0/3.0*Ceps1 + CRDT_)*alpha()*rho()*divU,
+            epsilon_
+        )
+      - fvm::Sp(Ceps2_*alpha()*rho()/T_(), epsilon_)
       + fvOptions(alpha, rho, epsilon_)
     );
 
@@ -368,16 +496,17 @@ void v2f<BasicTurbulenceModel>::correct()
     bound(epsilon_, this->epsilonMin_);
 
 
-    // Turbulent kinetic energy equation
+    // Turbulent kinetic energy equation (LK:Eq. 6)
+    // epsilon/k ~ 1/Ts (LK:p. 55)
     tmp<fvScalarMatrix> kEqn
     (
         fvm::ddt(alpha, rho, k_)
       + fvm::div(alphaRhoPhi, k_)
       - fvm::laplacian(alpha*rho*DkEff(), k_)
      ==
-        alpha*rho*G
-      - fvm::SuSp((2.0/3.0)*alpha*rho*divU, k_)
-      - fvm::Sp(alpha*rho*epsilon_/k_, k_)
+        alpha()*rho()*G()
+      - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, k_)
+      - fvm::Sp(alpha()*rho()/T_(), k_)
       + fvOptions(alpha, rho, k_)
     );
 
@@ -388,13 +517,14 @@ void v2f<BasicTurbulenceModel>::correct()
     bound(k_, this->kMin_);
 
 
-    // Relaxation function equation
+    // Elliptic relaxation function equation (LK:Eq. 15)
     tmp<fvScalarMatrix> fEqn
     (
       - fvm::laplacian(f_)
      ==
-      - fvm::Sp(1.0/L2, f_)
-      - 1.0/L2/k_*(v2fAlpha - C2_*G)
+      - fvm::Sp(1.0/L2(), f_)
+      - (v2fAlpha - C2_*G())/(L2()*k_())
+      - (2.0/3.0*C2_)*divU/L2()
     );
 
     fEqn.ref().relax();
@@ -404,15 +534,15 @@ void v2f<BasicTurbulenceModel>::correct()
     bound(f_, fMin_);
 
 
-    // Turbulence stress normal to streamlines equation
+    // Wall-normal fluctuating velocity scale equation (LK:Eq. 14; D:Eq. 6)
     tmp<fvScalarMatrix> v2Eqn
     (
         fvm::ddt(alpha, rho, v2_)
       + fvm::div(alphaRhoPhi, v2_)
-      - fvm::laplacian(alpha*rho*DkEff(), v2_)
+      - fvm::laplacian(alpha*rho*Dv2Eff(), v2_)
       ==
-        alpha*rho*min(k_*f_, C2_*G - v2fAlpha)
-      - fvm::Sp(N*alpha*rho*epsilon_/k_, v2_)
+        alpha()*rho()*min(k_()*f_(), C2_*(G() - 2.0/3.0*k_()*divU) - v2fAlpha)
+      - fvm::Sp(6.0*alpha()*rho()*epsilon_()/k_(), v2_)
       + fvOptions(alpha, rho, v2_)
     );
 
@@ -421,6 +551,10 @@ void v2f<BasicTurbulenceModel>::correct()
     solve(v2Eqn);
     fvOptions.correct(v2_);
     bound(v2_, v2Min_);
+
+    // Update the turbulent time scale
+    C = (sqrt(6.0)*Cmu_)*(sqrt(S && S)*v2_) + this->epsilonMin_;
+    T_ = this->Ts(C);
 
     correctNut();
 }
