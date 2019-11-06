@@ -1,26 +1,229 @@
-#!/bin/sh
-cd ${0%/*} || exit 1    # run from this directory
+#!/bin/bash
+cd ${0%/*} || exit 1                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#-----------------------------------------------------------------------------
 
-Uinf=$1
-nuInf=$2
-model=$3
-yp=$4
-gnuplot<<EOF
-    set terminal pngcairo font "arial,16" size 800,600
-    set output "OF_${model}_YP${yp}.png"
-    set xlabel "Re_x"
-    set ylabel "Cf"
-    set grid
-    set key right top
-    set xrange [0:1e7]
-    set yrange [0:0.006]
-    UInf = $Uinf
-    nuInf = $nuInf
-    X0 = 0 # Location of start of plate
-    laminar(x) = 0.664/(sqrt(x)) # Blasius - laminar
-    weighardt(x) = 0.288*(log10(x))**(-2.45) # turbulent
-    plot \
-        weighardt(x) t "Weighardt"  w lines lc "red" lw 2, \
-        "tauw_${model}_${yp}.dat" u (\$1 - X0)*UInf/nuInf:(sqrt(\$2*\$2 + \$3*\$3 + \$4*\$4)/(0.5*UInf*UInf)) title "$model y^+ ${yp}" w lines lc "black" lw 2
+modelSet=('kOmegaSST' 'LamBremhorstKE')
+y1PlusSet=('0.05' '1')
 
-EOF
+# The complete set of low-Re-type-grid turbulence closure models
+# modelSet=('kOmegaSST' 'LamBremhorstKE' 'LienCubicKE' 'LienLeschziner'
+#           'qZeta' 'ShihQuadraticKE' 'LaunderSharmaKE' 'LRR' 'realizableKE'
+#           'RNGkEpsilon' 'SpalartAllmaras' 'SSG' 'v2f' 'kkLOmega'
+#           'kOmegaSSTLM')
+#
+# The complete set of high-Re-type-grid turbulence closure models
+# modelSet=('kOmegaSST' 'kEpsilon' 'ShihQuadraticKE' 'kOmega'
+#           'realizableKE' 'RNGkEpsilon' 'SpalartAllmaras' 'SSG' 'v2f'
+#           'kOmegaSSTLM')
+#-----------------------------------------------------------------------------
+
+plotRexCf() {
+    URef=$1
+    nuFluid=$2
+    param=$3
+    shift 3
+    declare -a resultSetA=("${!1}")
+    declare -a paramSetA=("${!2}")
+
+    gnuplot<<PLT_REX_CF
+        set terminal pngcairo font "helvetica,16" size 800,600
+        set grid
+        set key right top
+        set xrange [0:1e7]
+        set yrange [0:6e-3]
+        set xlabel "Re_x"
+        set ylabel "C_f" rotate by 0
+
+        U="$URef"
+        nu="$nuFluid"
+        param="$param"
+        results="${resultSetA[*]}"
+        params="${paramSetA[*]}" #y1Pluses | models
+
+        X0 = 0 # Location of start of plate
+        laminar(x) = 0.664/(sqrt(x)) # Blasius - laminar
+        turbulent(x) = 0.288*(log10(x))**(-2.45) # Wieghardt-Tillman, 1951
+
+        set output "ReX_Cf_${param}.png"
+        set title "${param}"
+
+        plot \
+            turbulent(x) t "Turbulent - Wieghardt-Tillmann" \
+              w lines lc "red" lw 2, \
+            laminar(x) t "Blasius - Laminar" w lines lc "blue" lw 2, \
+            for [i=1:words(results)] word(results, i) \
+              u (\$1 - X0)*U/nu:(sqrt(\$2*\$2 + \$3*\$3 + \$4*\$4)/(0.5*U*U)) \
+              t word(params, i) with lines lw 2.5
+
+PLT_REX_CF
+}
+
+
+plotRethetaCf() {
+    URef=$1
+    nuFluid=$2
+    model=$3
+    shift 3
+    declare -a resultSetA=("${!1}")
+    declare -a y1PlusSetA=("${!2}")
+
+    gnuplot<<PLT_RETHETA_CF
+        set terminal pngcairo font "helvetica,16" size 800,600
+        set grid
+        set key right top
+        set xrange [4e3:1.3e4]
+        set yrange [0.002:0.004]
+        set xlabel "Re_{theta}"
+        set ylabel "C_f" rotate by 0
+
+        U="$URef"
+        model="$model"
+        results="${resultSetA[*]}"
+        y1Pluses="${y1PlusSetA[*]}"
+        Cx="${resultSetA[0]}"
+
+        X0 = 0 # Location of start of plate
+        # The Karman-Schoenherr (K-S) relation
+        KS(x) = 1.0/(17.08*(log10(x))**2.0 + 25.11*(log10(x)) + 6.012)
+        # Curve fit: https://go.nasa.gov/32gGiEk
+        ReTheta(x) = -913.70976207*(x**2) + 8748.27899082*x + 335.57823644
+
+        set output "ReTheta_Cf_${model}.png"
+        set title "${model}"
+
+        plot \
+            Cx u (ReTheta(\$1 - X0)):(KS(ReTheta(\$1 - X0))) \
+              t "Karman-Schoenherr"  w lines lc "red" lw 2, \
+            for [i=1:words(results)] word(results, i) \
+              u (ReTheta(\$1 - X0)):(sqrt(\$2*\$2 + \$3*\$3 + \$4*\$4)/(0.5*U*U)) \
+              t word(y1Pluses, i) with lines lw 2.5
+
+PLT_RETHETA_CF
+}
+
+
+plotYplusUplus() {
+    param=$1
+    shift 1
+    declare -a resultSetA=("${!1}")
+    declare -a paramSetA=("${!2}")
+
+    URL="https://turbmodels.larc.nasa.gov/FlatPlate_validation/u+y+.dat"
+    benchFile="Coles-vanDriest-u+y+.dat"
+    [ ! -f $benchFile ] && \wget -q -O $benchFile $URL
+
+    if [[ "$?" != 0 ]] && [[ ! -f $benchFile ]]; then
+        \echo "    wget could not download the file in URL=${URL}."
+        \exit 1
+    fi
+
+    gnuplot<<PLT_YPLUS_UPLUS
+        set terminal pngcairo font "helvetica,16" size 800,600
+        set grid
+        set key right top
+        set xrange [-1:4]
+        set yrange [0:30]
+        set xlabel "log_{10}(y^+)"
+        set ylabel "u^+" rotate by 0
+
+        param="$param"
+        results="${resultSetA[*]}"
+        params="${paramSetA[*]}"
+        benchFile="$benchFile"
+
+        set output "y+u+_${param}.png"
+        set title "${param}"
+
+        plot \
+            benchFile u (log10(\$1)):(\$2) every ::4 \
+              t "Coles-vanDriest"  w lines lc "red" lw 2, \
+            for [i=1:words(results)] word(results, i) \
+              u (log10(\$1)):(\$2) t word(params, i) with lines lw 2.5
+
+PLT_YPLUS_UPLUS
+}
+#------------------------------------------------------------------------------
+
+# Test if gnuplot exists on the system
+command -v gnuplot >/dev/null 2>&1 || {
+    \echo "gnuplot not found - skipping graph creation" 1>&2
+    \exit 1
+}
+
+
+URef=$(foamDictionary -entry internalField 0/U | \
+    \sed 's/^.*(\s*\([^ ]*\).*/\1/g')
+nuFluid=$(foamDictionary -entry nu constant/transportProperties | \
+    \sed 's/^.*\s\(.*\);/\1/g')
+plotDir="results/plots"
+[ ! -d $plotDir ] && \mkdir -p $plotDir
+
+
+#########################################
+# A plot for each model with all yPluses
+#########################################
+for model in "${modelSet[@]}"
+do
+    \echo "Post-processing: " $model
+    resultSet1=()
+    resultSet2=()
+    n=0
+    for y1Plus in "${y1PlusSet[@]}"
+    do
+        resultSet1[$n]="results/${model}_${y1Plus}/tauw_${model}_${y1Plus}.dat"
+        resultSet2[$n]="results/${model}_${y1Plus}/postProcessing/sample/y+u+.dat"
+        n=$(($n+1))
+    done
+
+    plotRexCf $URef $nuFluid $model resultSet1[@] y1PlusSet[@]
+    plotRethetaCf $URef $nuFluid $model resultSet1[@] y1PlusSet[@]
+
+    # The Coles-vanDriest plot needs an internet connection
+    \echo -e "GET http://google.com HTTP/1.0\n\n" |\
+        nc google.com 80 > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+        plotYplusUplus $model resultSet2[@] y1PlusSet[@]
+    else
+        \echo "Skipping the comparison with the Coles-vanDriest plot due to"\
+             "the lack of internet connection"
+    fi
+done
+
+
+########################################
+# A plot for each yPlus with all models
+########################################
+for y1Plus in "${y1PlusSet[@]}"
+do
+    echo "Post-processing: " $y1Plus
+
+    resultSet1=()
+    resultSet2=()
+    n=0
+    for model in "${modelSet[@]}"
+    do
+        resultSet1[$n]="results/${model}_${y1Plus}/tauw_${model}_${y1Plus}.dat"
+        resultSet2[$n]="results/${model}_${y1Plus}/postProcessing/sample/y+u+.dat"
+        n=$(($n+1))
+    done
+
+    plotRexCf $URef $nuFluid $y1Plus resultSet1[@] modelSet[@]
+    plotRethetaCf $URef $nuFluid $y1Plus resultSet1[@] modelSet[@]
+
+    # The following needs internet connection
+    \echo -e "GET http://google.com HTTP/1.0\n\n" |\
+        nc google.com 80 > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+        plotYplusUplus $model resultSet2[@] modelSet[@]
+    else
+        \echo "Skipping the comparison with the Coles-vanDriest plot due to"\
+             "the lack of internet connection"
+    fi
+done
+
+\mv {Re,y+}*png $plotDir
+
+# -----------------------------------------------------------------------------

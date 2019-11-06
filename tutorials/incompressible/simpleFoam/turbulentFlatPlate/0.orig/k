@@ -9,14 +9,53 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      transportProperties;
+    class       volScalarField;
+    object      k;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-transportModel  Newtonian;
+dimensions      [0 2 -2 0 0 0 0];
 
-nu              1.3728e-05;
+// U = 68.642 [m/s]
+// TI = 0.0039 [%]
+// muT/mu = 0.009 [-]
+// https://www.cfd-online.com/Tools/turbulence.php
+
+internalField   uniform 0.000010749798680166;
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
+
+    topWall
+    {
+        type            zeroGradient;
+    }
+
+    bottomWall
+    {
+        type            kqRWallFunction;
+        value           $internalField;
+    }
+
+    symmetry
+    {
+        type            symmetryPlane;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+}
 
 // ************************************************************************* //

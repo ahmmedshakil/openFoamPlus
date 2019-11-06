@@ -1,0 +1,23 @@
+// Please see the file header of 'sample' file
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+type                sets;
+libs                (sampling);
+writeControl        writeTime;
+interpolationScheme cellPatchConstrained;
+setFormat           raw;
+fields              (wallShearStress);
+
+sets
+(
+    tau
+    {
+        type        patchCloud;
+        axis        xyz;
+        points      ((1.293 0 0.05));
+        maxDistance 0.01;
+        patches     (bottomWall);
+    }
+);
+
+// ************************************************************************* //

@@ -7,16 +7,22 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      transportProperties;
+    version         2.0;
+    format          ascii;
+    class           dictionary;
+    location        "constant";
+    object          turbulenceProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-transportModel  Newtonian;
+simulationType  RAS;
 
-nu              1.3728e-05;
+RAS
+{
+    RASModel        NONE;
+    turbulence      on;
+    printCoeffs     on;
+}
+
 
 // ************************************************************************* //

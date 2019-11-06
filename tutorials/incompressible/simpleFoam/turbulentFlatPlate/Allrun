@@ -1,85 +1,189 @@
-#!/bin/sh
+#!/bin/bash
 cd ${0%/*} || exit 1                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+. ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions      # Tutorial clean functions
 #------------------------------------------------------------------------------
+
+# User input
+gridMode="lowRe"                #"highRe"
+transportSchemesType="upwind"   #"limitedLinear 1"
+
+#------------------------------------------------------------------------------
+
+endTime=1
+writeInterval=1
+\cp system/controlDict.template system/controlDict
 
 if notTest $@
 then
-    models="
-    kOmegaSST
-    "
+    endTime=5000
+    writeInterval=100
+fi
 
-    declare -A grading_vs_yp
-    #level 5 gradings
-    grading_vs_yp[0.05]=50000
-    grading_vs_yp[1]=2200
-    grading_vs_yp[2]=950
-    grading_vs_yp[5]=300
-    grading_vs_yp[10]=130
-    grading_vs_yp[30]=30
-    grading_vs_yp[50]=15
-    grading_vs_yp[100]=5
+\sed -i "s|END_TIME|$endTime|g" system/controlDict
+\sed -i "s|WRITE_INTERVAL|$writeInterval|g" system/controlDict
 
-    # level 3 gradings
-    #grading_vs_yp[1]=9300
-    #grading_vs_yp[2]=4300
-    #grading_vs_yp[5]=1500
-    #grading_vs_yp[10]=650
-    #grading_vs_yp[30]=175
-    #grading_vs_yp[50]=90
-    #grading_vs_yp[100]=35
 
-    \cp constant/turbulenceProperties.orig constant/turbulenceProperties
+declare -A models
+declare -A grading_vs_y1p
 
-    for model in $models
+epsilonLowReCorrection=""
+omegaBlending=""
+nutWallFunctionType=""
+
+
+if [ "$gridMode" = "lowRe" ]
+then
+    \echo "     Tests will be held with low Reynolds number type grids."
+
+    # Turbulence closure models
+    models[0]="kOmegaSST"
+    models[1]="LamBremhorstKE"
+    models[2]="LienCubicKE"
+    models[3]="LienLeschziner"
+    models[4]="qZeta"
+    models[5]="ShihQuadraticKE"
+    models[6]="LaunderSharmaKE"
+    models[7]="LRR"
+    models[8]="realizableKE"
+    models[9]="RNGkEpsilon"
+    models[10]="SpalartAllmaras"
+    models[11]="SSG"
+    models[12]="v2f"
+    models[13]="kkLOmega"
+    models[14]="kOmegaSSTLM"
+
+    # Level 5 gradings
+    grading_vs_y1p[0.05]=50000
+    grading_vs_y1p[1]=2200
+    grading_vs_y1p[2]=950
+    grading_vs_y1p[5]=300
+    grading_vs_y1p[10]=130
+    # Level 3 gradings
+    #grading_vs_y1p[1]=9300
+    #grading_vs_y1p[2]=4300
+    #grading_vs_y1p[5]=1500
+    #grading_vs_y1p[10]=650
+
+    epsilonLowReCorrection="on"
+    omegaBlending="on"
+    nutWallFunctionType="nutLowReWallFunction"
+
+elif [ "$gridMode" == "highRe" ]
+then
+    \echo "     Tests will be held with high Reynolds number type grids."
+
+    # Turbulence closure models
+    models[0]="kOmegaSST"
+    models[1]="kEpsilon"
+    models[2]="ShihQuadraticKE"
+    models[3]="kOmega"
+    models[4]="realizableKE"
+    models[5]="RNGkEpsilon"
+    models[6]="SSG"
+    models[7]="v2f"
+    models[8]="kOmegaSSTLM"
+
+    # Level 5 gradings
+    grading_vs_y1p[30]=30
+    grading_vs_y1p[50]=15
+    grading_vs_y1p[100]=5
+    # Level 3 gradings
+    #grading_vs_y1p[30]=175
+    #grading_vs_y1p[50]=90
+    #grading_vs_y1p[100]=35
+
+    epsilonLowReCorrection="off"
+    omegaBlending="off"
+    nutWallFunctionType="nutUWallFunction"
+fi
+#------------------------------------------------------------------------------
+
+mainResultDir="results"
+[ -d "$mainResultDir" ] && \mv "$mainResultDir" results.bak
+\rm -rf "$mainResultDir"
+\mkdir "$mainResultDir"
+\cp -r 0.orig 0
+\cp system/fvSchemes.template system/fvSchemes
+\sed -i "s|LOWRECORR|$epsilonLowReCorrection|g" 0/epsilon
+\sed -i "s|BLENDING|$omegaBlending|g" 0/omega
+\sed -i "s|FUNCTYPE|$nutWallFunctionType|g" 0/nut
+\sed -i "s|SCHEMETYPE|$transportSchemesType|g" system/fvSchemes
+
+
+for y1Plus in "${!grading_vs_y1p[@]}"
+do
+    grading="${grading_vs_y1p[$y1Plus]}"
+
+    \echo "Mesh: y1+ = $y1Plus"
+
+    \sed "s|GRADING|$grading|g" system/blockMeshDict.template \
+        > system/blockMeshDict
+
+    runApplication -s "y1+_$y1Plus" blockMesh
+
+
+    for modelID in "${!models[@]}"
     do
+        model="${models[$modelID]}"
+
         echo "Processing model: $model"
 
-        runApplication -s $model foamDictionary -entry RAS.RASModel -set $model constant/turbulenceProperties
+        \cp constant/turbulenceProperties.template \
+            constant/turbulenceProperties
+        runApplication -s $model foamDictionary -entry RAS.RASModel \
+            -set $model constant/turbulenceProperties
 
-        for i in "${!grading_vs_yp[@]}"
-        do
-            yp=$i
-            grading=${grading_vs_yp[$yp]}
+        cleanTimeDirectories
 
-            echo "Mesh: y+ $yp"
+        case="${model}_${y1Plus}"
+        runApplication -s $case simpleFoam
 
-            \rm -rf 0 [1-9]*
-            \cp -rf 0.${model} 0
+        # Create datasets for benchmark comparisons
+        timeDir=$(foamListTimes -latestTime)
 
-            sed "s/GRADING/$grading/g" system/blockMeshDict.template > system/blockMeshDict
+        foamDictionary -entry boundaryField.bottomWall.value -value \
+            $timeDir/Cx | \sed -n '/(/,/)/p' | \
+            \sed -e 's/[()]//g;/^\s*$/d' > Cx.$$
+        foamDictionary -entry boundaryField.bottomWall.value -value \
+            $timeDir/wallShearStress | \sed -n '/(/,/)/p' | \
+            \sed -e 's/[()]//g;/^\s*$/d' > tau.$$
+        foamDictionary -entry boundaryField.bottomWall.value -value \
+            $timeDir/yPlus | \sed -n '/(/,/)/p' | \
+            \sed -e 's/[()]//g;/^\s*$/d' > yp.$$
 
-            runApplication -s ${model}_${yp} blockMesh
+        \echo "# ccx tau_xx tau_yy tau_zz" > tauw_$case.dat
+        \paste -d ' ' Cx.$$ tau.$$ >> tauw_$case.dat
+        \echo "# ccx y+" > yplus_$case.dat
+        \paste -d ' ' Cx.$$ yp.$$ >> yplus_$case.dat
+        \rm -f Cx.$$ tau.$$ yp.$$
 
-            runApplication -s ${model}_${yp} simpleFoam
+        # y+ u+
+        sampleDir="postProcessing/sampleWall/$timeDir"
+        sampleFile="$sampleDir/tau_wallShearStress.xy"
+        uTau=($(awk '{u = sqrt(-1*$4); printf "%.16f\n", u}' $sampleFile))
 
-            UInf=$(foamDictionary -entry internalField 0/U | sed 's/^.*(\s*\([^ ]*\).*/\1/g')
-            nuInf=$(foamDictionary -entry nu constant/transportProperties | sed 's/^.*\s\(.*\);/\1/g')
+        sampleDir="postProcessing/sample/$timeDir"
+        sampleFile="$sampleDir/y_profile_U.xy"
+        nuFluid=$(foamDictionary -entry nu constant/transportProperties | \
+            \sed 's|^.*\s\(.*\);|\1|g')
+        yPlus=($(awk -v nuFluid="$nuFluid" -v uTau="$uTau" \
+            '{y = $1*uTau/nuFluid; printf "%.16f\n", y}' $sampleFile))
+        uPlus=($(awk -v uTau="$uTau" \
+            '{uplus = $2/uTau; printf "%.16f\n", uplus}' $sampleFile))
 
-            timeDir=$(foamListTimes -latestTime)
+        outputFile="postProcessing/sample/y+u+.dat"
+        [ ! -f $outputFile ] && for ((i=0; i< "${#yPlus[@]}"; i++)) \
+            do printf "%.16f %.16f\n" "${yPlus[$i]}" "${uPlus[$i]}" \
+            >> $outputFile; done
 
-            echo "UInf = $UInf"
-
-            foamDictionary -entry boundaryField.bottomWall.value -value $timeDir/Cx | \
-                sed -n '/(/,/)/p' | sed -e 's/[()]//g;/^\s*$/d' > Cx.$$
-            foamDictionary -entry boundaryField.bottomWall.value -value $timeDir/wallShearStress | \
-                sed -n '/(/,/)/p' | sed -e 's/[()]//g;/^\s*$/d' > tau.$$
-            foamDictionary -entry boundaryField.bottomWall.value -value $timeDir/yPlus | \
-                sed -n '/(/,/)/p' | sed -e 's/[()]//g;/^\s*$/d' > yp.$$
-
-            echo "# ccx tau_xx tau_yy tau_zz" > tauw_${model}_${yp}.dat
-            paste -d ' ' Cx.$$ tau.$$ >> tauw_${model}_${yp}.dat
-            echo "# ccx y+" > yplus_${model}_${yp}.dat
-            paste -d ' ' Cx.$$ yp.$$ >> yplus_${model}_${yp}.dat
-            \rm -f Cx.$$ tau.$$ yp.$$
-
-            ./plot $UInf $nuInf $model $yp
-
-            # Optionally store the results
-            #mv $timeDir ${model}_${yp}.${timeDir}
-        done
-        mv postProcessing postProcessing-${model}
+        # Collect results into $resultDir
+        resultDir="${mainResultDir}/${case}"
+        \mkdir -p "$resultDir"
+        \mv $timeDir postProcessing log.* {tauw,yplus}_$case.dat $resultDir
+        \cp system/fv* constant/{tr*,turb*}Properties $resultDir
+        \cp -r 0 $resultDir
     done
-fi
+done
 
 # -----------------------------------------------------------------------------

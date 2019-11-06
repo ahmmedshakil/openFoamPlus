@@ -1,0 +1,32 @@
+// Herein, U-profile at approximately ReTheta = 10,000 has been sampled
+// to enable comparisons with the law-of-the-wall based on
+// Coles' mean velocity profile shown here:
+// https://turbmodels.larc.nasa.gov/flatplate_val.html
+// The x-coordinate of the flat-plate sampling location corresponding
+// to ReTheta = 10,000 was approximated by a linear interpolation using:
+// https://turbmodels.larc.nasa.gov/FlatPlate_validation/retheta_variation_typical.dat
+// VARIABLES = "x","retheta"
+// 1.291185260E+00 9.985972656E+03
+// 1.301924825E+00 1.005524316E+04
+// At ReTheta = 10,000; x ~ 1.293[m]
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+type                sets;
+libs                (sampling);
+writeControl        writeTime;
+interpolationScheme cellPoint;
+setFormat           raw;
+fields              (U);
+
+sets
+(
+    y_profile
+    {
+        type    midPoint;
+        axis    y;
+        start   (1.293 0 0.05);
+        end     (1.293 1 0.05);
+    }
+);
+
+// ************************************************************************* //
